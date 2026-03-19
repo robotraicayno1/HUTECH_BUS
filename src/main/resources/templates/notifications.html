@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECHBUS - Thông báo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ff6b00;
+            --secondary-color: #003366;
+            --bg-color: #f0f2f5;
+            --card-shadow: 0 4px 25px rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body { display: flex; height: 100vh; background-color: var(--bg-color); color: #333; }
+
+        /* Sidebar Styling */
+        .sidebar { width: 280px; background: var(--secondary-color); color: white; padding: 35px 25px; display: flex; flex-direction: column; }
+        .sidebar h2 { font-size: 1.6rem; margin-bottom: 50px; font-weight: 800; letter-spacing: -1px; }
+        .sidebar h2 span { color: var(--primary-color); }
+        .nav-link { 
+            display: flex; align-items: center; padding: 14px 18px; color: rgba(255,255,255,0.7); 
+            text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .nav-link:hover, .nav-link.active { background: rgba(255,107,0,1); color: white; box-shadow: 0 4px 15px rgba(255,107,0,0.3); }
+
+        /* Main Content Styling */
+        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        
+        .noti-list { display: flex; flex-direction: column; gap: 15px; }
+        .noti-card { background: white; padding: 20px; border-radius: 15px; box-shadow: var(--card-shadow); border-left: 4px solid #ddd; }
+        .noti-card.unread { border-left-color: var(--primary-color); background: #fffcf9; }
+        
+        .noti-card h4 { font-size: 1rem; color: var(--secondary-color); margin-bottom: 5px; }
+        .noti-card p { font-size: 0.9rem; color: #666; }
+        .noti-time { font-size: 0.75rem; color: #aaa; margin-top: 10px; text-align: right; }
+
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>HUTECH<span>BUS</span></h2>
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+        <a href="/routes" class="nav-link">Tra cứu lộ trình</a>
+        <a href="/history" class="nav-link">Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link">Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link active">Thông báo</a>
+        
+        <div style="flex: 1;"></div>
+        <a href="#" class="nav-link">Cài đặt tài khoản</a>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <p style="color: #888; font-size: 0.9rem;">Cập nhật tin tức và thông báo mới nhất</p>
+                <h1>Thông báo</h1>
+            </div>
+        </div>
+
+        <div class="noti-list">
+            <div class="noti-card unread">
+                <h4>🎉 Cập nhật Tuyến xe bus 167 mới!</h4>
+                <p>Hệ thống vừa cập nhật tuyến 167 kết nối ĐH Nông Lâm và Khu CNC. Các bạn có thể tra cứu ngay trên app.</p>
+                <div class="noti-time">Vừa xong</div>
+            </div>
+            <div class="noti-card">
+                <h4>⚠️ Thay đổi lộ trình Tuyến 01</h4>
+                <p>Do sự kiện tại cơ sở A, Tuyến 01 sẽ dời trạm đón sang đường Ung Văn Khiêm trong ngày 21/03.</p>
+                <div class="noti-time">2 giờ trước</div>
+            </div>
+            <div class="noti-card">
+                <h4>✅ Đăng ký thẻ thành công</h4>
+                <p>Chào mừng bạn đến với HUTECHBUS. Thẻ ảo của bạn đã sẵn sàng để check-in.</p>
+                <div class="noti-time">Hôm qua</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
