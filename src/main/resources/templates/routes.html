@@ -27,6 +27,7 @@
         <h2>HUTECH<span>BUS</span></h2>
         <a href="/dashboard" class="nav-link">Dashboard</a>
         <a href="/routes" class="nav-link active">Tra cứu lộ trình</a>
+        <a href="/my-tickets" class="nav-link" style="color: #f59e0b; font-weight: 500;">🎟️ Vé của tôi</a>
         <a href="/history" class="nav-link">Lịch sử chuyến đi</a>
         <a href="/favorites" class="nav-link">Đã lưu / Yêu thích</a>
         <a href="/notifications" class="nav-link">Thông báo</a>
@@ -119,14 +120,9 @@
                 console.error("Lỗi khi tải dữ liệu tuyến đường:", err);
             }
         }
-        async function recordTrip(id) {
-            try {
-                const res = await fetch(`/api/trips/record/${id}`, { method: 'POST' });
-                const data = await res.json();
-                if (data.success) {
-                    alert('Đã ghi nhận chuyến đi thành công!');
-                }
-            } catch (err) { console.error(err); }
+        function recordTrip(id) {
+            // Chuyển hướng trực tiếp sang trang Đặt ghế
+            window.location.href = `/booking?routeId=${id}`;
         }
 
         async function toggleFavorite(id, el) {
