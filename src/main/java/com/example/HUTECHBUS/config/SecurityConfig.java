@@ -1,27 +1,29 @@
 package com.example.HUTECHBUS.config;
 
+import com.example.HUTECHBUS.service.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * Cấu hình Spring Security cho ứng dụng HUTECHBUS.
  *
  * - Tất cả các trang yêu cầu đăng nhập, ngoại trừ trang login và tài nguyên tĩnh.
- * - Sử dụng form login mặc định, chuyển hướng về /dashboard sau khi đăng nhập thành công.
- * - Sau khi đăng xuất, người dùng được chuyển về trang login.
+ * - Xác thực người dùng từ MongoDB thông qua CustomUserDetailsService.
+ * - Sau khi đăng nhập thành công, chuyển hướng đến /dashboard.
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
 
     /** BCrypt encoder dùng để mã hóa mật khẩu khi lưu và xác thực */
     @Bean
@@ -29,28 +31,20 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    /** Cấu hình tài khoản test trong bộ nhớ */
+    /** Cấu hình DaoAuthenticationProvider để dùng MongoDB */
     @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-        UserDetails admin = User.builder()
-            .username("admin")
-            .password(encoder.encode("admin"))
-            .roles("ADMIN")
-            .build();
-            
-        UserDetails user = User.builder()
-            .username("user")
-            .password(encoder.encode("user"))
-            .roles("USER")
-            .build();
-            
-        return new InMemoryUserDetailsManager(admin, user);
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(customUserDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
     }
 
     /** Cấu hình chuỗi bộ lọc bảo mật */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .authenticationProvider(authenticationProvider())
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/booking.html", "/index.html", "/css/**", "/js/**", "/images/**", "/api/**").permitAll()

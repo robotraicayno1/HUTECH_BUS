@@ -32,35 +32,6 @@ async function fetchActiveTrip() {
     }
 }
 
-// Hàm vẽ sơ đồ ghế có lối đi (Aisle) để khớp với CSS
-function initBusLayout(tripData) {
-    const container = document.getElementById('seats-container');
-    container.innerHTML = '';
-    
-    const bookedSeatsList = tripData ? tripData.lockedSeats : [];
-    const totalSeats = tripData ? tripData.totalSeats : 45;
-    
-    // Layout 5 cột: [Ghế] [Ghế] [Lối đi] [Ghế] [Ghế]
-    // Với 45 ghế, ta cần khoảng 11 hàng (11 * 4 = 44, hàng cuối 5 ghế)
-    // Để đơn giản và khớp CSS, ta chạy vòng lặp và chèn 'aisle' ở cột 3
-    let seatCounter = 1;
-    while (seatCounter <= totalSeats) {
-        for (let col = 1; col <= 5; col++) {
-            if (seatCounter > totalSeats) break;
-
-            if (col === 3) {
-                // Chèn lối đi
-                const aisle = document.createElement('div');
-                aisle.className = 'aisle';
-                container.appendChild(aisle);
-            } else {
-                createSeatElement(container, seatCounter, bookedSeatsList);
-                seatCounter++;
-            }
-        }
-    }
-}
-
 // Hàm tự động vẽ sơ đồ ghế ngồi dựa trên dữ liệu thật từ Server
 function initBusLayout(tripData) {
     const container = document.getElementById('seats-container');
@@ -92,8 +63,8 @@ function createSeatElement(container, seatId, bookedSeatsList) {
     seat.textContent = seatId;
     seat.dataset.id = seatId; // Gắn data-id để dễ truy xuất
 
-    // Kiểm tra nếu ghế nằm trong mảng đã bị người khác đặt
-    if (bookedSeatsList.includes(seatId)) {
+    // Kiểm tra nếu ghế nằm trong mảng đã bị người khác đặt (API trả về số nguyên)
+    if (bookedSeatsList.includes(parseInt(seatId))) {
         seat.classList.add('booked');
     } else {
         // Nếu ghế trống, gán sự kiện click để chọn/bỏ chọn

@@ -1,5 +1,7 @@
 package com.example.HUTECHBUS.controller;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,18 +31,24 @@ public class LoginController {
      * Truyền thông tin người dùng vào model để hiển thị.
      */
     @GetMapping("/dashboard")
-    public String dashboard(Model model, Principal principal) {
-        if (principal == null) return "redirect:/login";
+    public String dashboard(Model model, Authentication authentication) {
+        if (authentication == null) return "redirect:/login";
 
-        // Kiểm tra xem người dùng có phải là tài xế không (tạm thời kiểm tra qua username/database nếu cần)
-        // Ở đây đơn giản là nếu username bắt đầu bằng 'driver' thì chuyển sang trang tài xế
-        // Hoặc tốt nhất là để người dùng tự chọn, nhưng theo yêu cầu "về dashboard chính tài khoản đó"
-        // Ta sẽ kiểm tra ROLE nếu có tích hợp đầy đủ, ở đây ta giả định driver01...
-        if (principal.getName().startsWith("driver")) {
+        // Kiểm tra role MANAGER để chuyển hướng sang trang tài xế
+        boolean isManager = authentication.getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_MANAGER"));
+        if (isManager) {
             return "redirect:/driver/app";
         }
 
-        model.addAttribute("username", principal.getName());
+        // Kiểm tra role ADMIN để chuyển hướng sang trang admin
+        boolean isAdmin = authentication.getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        if (isAdmin) {
+            return "redirect:/admin";
+        }
+
+        model.addAttribute("username", authentication.getName());
         return "index";
     }
 

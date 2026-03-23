@@ -209,7 +209,7 @@ public class DataSeeder {
             // 10 Sinh viên mẫu (211101 → 211110, mật khẩu: 123456)
             for (int i = 1; i <= 10; i++) {
                 User student = new User();
-                student.setUsername("21110" + i);
+                student.setUsername(String.format("2111%02d", i));
                 student.setPassword(passwordEncoder.encode("123456"));
                 student.setFullName("Sinh viên HUTECH " + i);
                 student.setRoles(Set.of("STUDENT"));
