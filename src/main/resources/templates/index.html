@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECHBUS - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #ff6b00;
+            --secondary-color: #003366;
+            --bg-color: #f0f2f5;
+            --card-shadow: 0 4px 25px rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body { display: flex; height: 100vh; background-color: var(--bg-color); color: #333; }
+
+        /* Sidebar Styling */
+        .sidebar { width: 280px; background: var(--secondary-color); color: white; padding: 35px 25px; display: flex; flex-direction: column; }
+        .sidebar h2 { font-size: 1.6rem; margin-bottom: 50px; font-weight: 800; letter-spacing: -1px; }
+        .sidebar h2 span { color: var(--primary-color); }
+        .nav-link { 
+            display: flex; align-items: center; padding: 14px 18px; color: rgba(255,255,255,0.7); 
+            text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .nav-link:hover, .nav-link.active { background: rgba(255,107,0,1); color: white; box-shadow: 0 4px 15px rgba(255,107,0,0.3); }
+
+        /* Main Content Styling */
+        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .user-profile { display: flex; align-items: center; gap: 15px; }
+        .user-avatar { width: 45px; height: 45px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; transition: transform 0.3s; }
+        .user-avatar:hover { transform: scale(1.1); }
+        
+        .btn-logout { background: #f83a3a; color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: 0.3s; }
+        .btn-logout:hover { background: #d32f2f; }
+
+        /* Dashboard Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 25px; border-radius: 20px; box-shadow: var(--card-shadow); border-left: 5px solid var(--primary-color); }
+        .stat-card h3 { font-size: 0.85rem; color: #888; text-transform: uppercase; margin-bottom: 10px; }
+        .stat-card .value { font-size: 1.8rem; font-weight: 700; color: var(--secondary-color); }
+
+        .dashboard-layout { display: grid; grid-template-columns: 1fr 320px; gap: 25px; }
+        
+        .content-card { background: white; padding: 30px; border-radius: 20px; box-shadow: var(--card-shadow); height: fit-content; }
+        .content-card h2 { margin-bottom: 20px; font-size: 1.25rem; color: var(--secondary-color); border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
+
+        /* QR Section */
+        .qr-section { text-align: center; }
+        #qrcode { margin: 20px auto; padding: 15px; background: white; border-radius: 10px; width: fit-content; border: 1px solid #eee; }
+        .qr-info { font-size: 0.85rem; color: #666; margin-top: 10px; }
+
+        /* Journey List */
+        .journey-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f5f5f5; }
+        .journey-info h4 { font-size: 0.95rem; color: #333; }
+        .journey-info p { font-size: 0.8rem; color: #999; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; background: #e8f5e9; color: #2e7d32; }
+
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>HUTECH<span>BUS</span></h2>
+        <a href="/dashboard" class="nav-link active">Dashboard</a>
+        <a href="/my-tickets" class="nav-link">Vé của tôi (Mới)</a>
+        <a href="/routes" class="nav-link">Tra cứu & Đặt chỗ</a>
+        <a href="/history" class="nav-link">Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link">Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link">Thông báo</a>
+        <a href="/driver/app" class="nav-link" style="background: rgba(255,255,255,0.1); border-left: 3px solid #ff6b00;">📱 Driver/Lơ xe App</a>
+        
+        <hr style="border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
+        <div style="font-size: 0.75rem; letter-spacing: 1px; color: rgba(255,255,255,0.5); font-weight: bold; margin-bottom: 5px; padding-left: 18px;">QUẢN TRỊ ADMIN</div>
+        
+        <a href="javascript:void(0)" onclick="toggleAdminMenu()" class="nav-link" style="justify-content: space-between;">
+            Tính năng quản lý <span id="adminToggleIcon">▼</span>
+        </a>
+        <div id="adminMenu" style="display: none; padding-left: 15px; flex-direction: column;">
+            <a href="/admin/dashboard" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Tổng quan</a>
+            <a href="/admin/vehicles" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Quản lý Xe Bus</a>
+            <a href="/admin/routes" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Quản lý Tuyến</a>
+            <a href="/admin/stops" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Quản lý Trạm dừng</a>
+        </div>
+        
+        <div style="flex: 1;"></div>
+        <a href="#" class="nav-link">Cài đặt tài khoản</a>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <p style="color: #888; font-size: 0.9rem;">Chào mừng quay trở lại,</p>
+                <h1 th:text="${user != null ? user.fullName : (username != null ? username : 'Guest')}">Họ và tên</h1>
+            </div>
+            <div class="user-profile">
+                <!-- Sử dụng username từ model thay vì #authentication để an toàn hơn -->
+                <div class="user-avatar" th:text="${username != null ? username : 'US'}">HT</div>
+                <form th:action="@{/logout}" method="post" style="margin: 0; padding: 0;">
+                    <button type="submit" class="btn-logout" style="border: none; cursor: pointer;">Đăng xuất</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Số chuyến đi tháng này</h3>
+                <div class="value">12</div>
+            </div>
+            <div class="stat-card">
+                <h3>Tuyến hay sử dụng</h3>
+                <div class="value">Tuyến 01</div>
+            </div>
+            <div class="stat-card">
+                <h3>Điểm tích lũy (H-Point)</h3>
+                <div class="value" style="color: var(--primary-color);">450</div>
+            </div>
+        </div>
+
+        <div class="dashboard-layout">
+            <div class="content-card">
+                <h2>Hành trình gần đây</h2>
+                <div class="journey-list" id="journey-list">
+                    <!-- Sẽ được điền bằng JavaScript dựa trên hutech_my_tickets -->
+                    <div class="journey-item">
+                        <div class="journey-info">
+                            <p class="text-gray-500">Đang tải lịch sử...</p>
+                        </div>
+                    </div>
+                </div>
+                <a href="/routes" style="display: block; text-align: center; margin-top: 20px; color: var(--primary-color); text-decoration: none; font-size: 0.9rem; font-weight: 600;">Xem tất cả lịch sử ➔</a>
+            </div>
+
+            <div class="content-card qr-section">
+                <h2>Mã Check-in QR</h2>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Dùng mã này khi lên xe bus</p>
+                <div id="qrcode"></div>
+                <div class="qr-info">
+                    <p><b th:text="${username}">211101</b></p>
+                    <p th:text="${user != null ? user.fullName : ''}">Sinh viên A</p>
+                </div>
+                <p style="margin-top: 15px; font-size: 0.75rem; color: #aaa;">Mã tự động làm mới sau mỗi 60s</p>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        // Generate QR Code using username passed from controller
+        const currentUsername = /*[[${username}]]*/ 'HT-User';
+        if (currentUsername) {
+            new QRCode(document.getElementById("qrcode"), {
+                text: "HUTECHBUS-" + currentUsername,
+                width: 160,
+                height: 160,
+                colorDark : "#003366",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+        // Dropdown toggle logic
+        function toggleAdminMenu() {
+            var menu = document.getElementById('adminMenu');
+            var icon = document.getElementById('adminToggleIcon');
+            if (menu.style.display === 'none') {
+                menu.style.display = 'flex';
+                icon.innerText = '▲';
+            } else {
+                menu.style.display = 'none';
+                icon.innerText = '▼';
+            }
+        }
+
+        // Hiển thị thông báo từ VNPAY nếu có
+        const urlParams = new URLSearchParams(window.location.search);
+        const vnpStatus = urlParams.get('vnpay_status');
+        if (vnpStatus === 'success') {
+            // Lưu vé vào hutech_my_tickets nếu cần (ở đây ta lấy từ hutech_booked_seats)
+            const bookedSeats = JSON.parse(localStorage.getItem('hutech_booked_seats') || '[]');
+            if (bookedSeats.length > 0) {
+                const myTickets = JSON.parse(localStorage.getItem('hutech_my_tickets') || '[]');
+                const newTicket = {
+                    id: Math.floor(Math.random() * 1000000),
+                    route: "Chuyến vừa đặt",
+                    date: new Date().toLocaleDateString('vi-VN'),
+                    time: new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}),
+                    seats: bookedSeats.join(', '),
+                    total: bookedSeats.length * 10000,
+                    paymentMethod: 'TRANSFER'
+                };
+                myTickets.push(newTicket);
+                localStorage.setItem('hutech_my_tickets', JSON.stringify(myTickets));
+            }
+            
+            alert("🎉 Thanh toán thành công! Vé của bạn đã sẵn sàng.");
+            // Không redirect nữa, ở lại dashboard nhưng xóa query param để tránh lặp
+            window.history.replaceState({}, document.title, "/dashboard");
+        } else if (vnpStatus === 'error') {
+            alert("❌ Thanh toán thất bại hoặc đã bị hủy. Vui lòng thử lại.");
+            window.history.replaceState({}, document.title, "/dashboard");
+        }
+
+        // --- Logic hiển thị danh sách Hành trình gần đây từ LocalStorage ---
+        function renderRecentJourneys() {
+            const listEl = document.getElementById('journey-list');
+            const myTickets = JSON.parse(localStorage.getItem('hutech_my_tickets') || '[]');
+            
+            if (myTickets.length === 0) {
+                listEl.innerHTML = '<p style="color: #888; font-size: 0.9rem; padding: 20px 0;">Chưa có hành trình nào gần đây.</p>';
+                return;
+            }
+
+            let html = '';
+            // Lấy tối đa 3 vé mới nhất
+            myTickets.reverse().slice(0, 3).forEach(ticket => {
+                html += `
+                    <div class="journey-item" style="cursor: pointer;" onclick="viewTicket('${ticket.seats}')">
+                        <div class="journey-info">
+                            <h4>${ticket.route}</h4>
+                            <p>Ghế: ${ticket.seats} • ${ticket.date} ${ticket.time}</p>
+                        </div>
+                        <span class="status-badge">Sẵn sàng</span>
+                    </div>
+                `;
+            });
+            listEl.innerHTML = html;
+        }
+
+        function viewTicket(seats) {
+            localStorage.setItem('hutech_booked_seats', JSON.stringify(seats.split(', ')));
+            window.location.href = '/ticket';
+        }
+
+        renderRecentJourneys();
+    </script>
+</body>
+</html>

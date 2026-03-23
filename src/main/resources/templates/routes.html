@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECHBUS - Tra cứu lộ trình</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root { --primary-color: #ff6b00; --secondary-color: #003366; --bg-color: #f0f2f5; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+        body { display:flex; height:100vh; background:#f0f2f5; }
+        .sidebar { width:280px; background:#003366; color:white; padding:35px 25px; display:flex; flex-direction:column; }
+        .sidebar h2 { font-size:1.6rem; margin-bottom:50px; }
+        .nav-link { display:flex; padding:14px 18px; color:rgba(255,255,255,0.7); text-decoration:none; border-radius:12px; margin-bottom:8px; }
+        .nav-link.active { background:#ff6b00; color:white; }
+        .main-content { flex:1; display:flex; flex-direction:column; }
+        .header { background:white; padding:15px 30px; display:flex; justify-content:space-between; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+        .map-layout { display:flex; flex:1; }
+        .search-panel { width:380px; background:white; padding:20px; overflow-y:auto; }
+        #map { flex:1; }
+        .route-card { padding:15px; border:1px solid #eee; border-radius:12px; margin-bottom:15px; cursor:pointer; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>HUTECH<span>BUS</span></h2>
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+        <a href="/routes" class="nav-link active">Tra cứu lộ trình</a>
+        <a href="/my-tickets" class="nav-link" style="color: #f59e0b; font-weight: 500;">🎟️ Vé của tôi</a>
+        <a href="/history" class="nav-link">Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link">Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link">Thông báo</a>
+        <hr style="border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
+        <div style="font-size: 0.75rem; letter-spacing: 1px; color: rgba(255,255,255,0.5); font-weight: bold; margin-bottom: 5px; padding-left: 18px;">QUẢN TRỊ ADMIN</div>
+        
+        <a href="javascript:void(0)" onclick="toggleAdminMenu()" class="nav-link" style="justify-content: space-between;">
+            Tính năng quản lý <span id="adminToggleIcon">▼</span>
+        </a>
+        <div id="adminMenu" style="display: none; padding-left: 15px; flex-direction: column;">
+            <a href="/admin/dashboard" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Tổng quan</a>
+            <a href="/admin/vehicles" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Quản lý Xe Bus</a>
+            <a href="/admin/routes" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Quản lý Tuyến</a>
+            <a href="/admin/stops" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Quản lý Trạm dừng</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h3>Tra cứu lộ trình</h3>
+            <div>Chào, <span th:text="${username != null ? username : 'HT-User'}">User</span></div>
+        </div>
+        <div class="map-layout">
+            <div class="search-panel">
+                <input type="text" placeholder="Tìm kiếm tuyến xe..." style="width:100%; padding:10px; margin-bottom:20px; border-radius:8px; border:1px solid #ddd;">
+                <div id="routeList">
+                    <div th:each="route : ${routes}" class="route-card" 
+                         th:attr="data-id=${route.id}" 
+                         onclick="handleSelectRoute(this.getAttribute('data-id'))">
+                        <h4 th:text="${route.name}">Route Name</h4>
+                        <p th:text="${route.description}" style="font-size:0.8rem; color: #666;">Desc</p>
+                        <div style="display:flex; align-items:center; margin-top:8px;">
+                            <div th:style="|width:10px; height:10px; border-radius:50%; background:${route.colorCode != null ? route.colorCode : '#ccc'}; margin-right:5px;|"></div>
+                            <span style="font-size:0.75rem; color:#999;">Tuyến xe bus</span>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                            <div class="fav-btn" th:attr="data-id=${route.id}" onclick="toggleFavorite(this.getAttribute('data-id'), this)" 
+                                 style="font-size: 1.4rem; cursor: pointer; transition: transform 0.2s;"
+                                 onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                                 <!-- Initial state could be set via user data if passed, or just default to empty heart -->
+                                 🤍
+                            </div>
+                            <button class="action-btn" th:attr="data-id=${route.id}" onclick="recordTrip(this.getAttribute('data-id'))"
+                                    style="padding: 8px 15px; background: var(--primary-color); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                                Đi ngay
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([10.8231, 106.6297], 12);
+        // Thay đổi sang Google Maps (Roadmap)
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            attribution: '&copy; Google Maps'
+        }).addTo(map);
+        
+        const routeLayer = L.layerGroup().addTo(map);
+
+        async function handleSelectRoute(id) {
+            try {
+                const response = await fetch(`/api/routes/${id}/details`);
+                const data = await response.json();
+                
+                if (!data.route || !data.stops) return;
+
+                routeLayer.clearLayers();
+                
+                const coordinates = data.stops.map(s => [s.longitude, s.latitude]); // OSRM uses [lng, lat]
+                
+                if (coordinates.length > 1) {
+                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordinates.join(';')}?geometries=geojson&overview=full`;
+                    const routeRes = await fetch(osrmUrl);
+                    const routeData = await routeRes.json();
+                    
+                    if (routeData.routes && routeData.routes[0]) {
+                        const geometry = routeData.routes[0].geometry;
+                        const polyline = L.geoJSON(geometry, {
+                            style: {
+                                color: data.route.colorCode || '#ff6b00',
+                                weight: 6,
+                                opacity: 0.8
+                            }
+                        }).addTo(routeLayer);
+
+                        // Add markers
+                        data.stops.forEach((stop) => {
+                            L.marker([stop.latitude, stop.longitude])
+                             .bindPopup(`<b>${stop.name}</b>`)
+                             .addTo(routeLayer);
+                        });
+
+                        map.fitBounds(polyline.getBounds(), { padding: [40, 40] });
+                    }
+                }
+            } catch (err) {
+                console.error("Lỗi khi tải dữ liệu tuyến đường:", err);
+            }
+        }
+        function recordTrip(id) {
+            // Chuyển hướng trực tiếp sang trang Đặt ghế
+            window.location.href = `/booking?routeId=${id}`;
+        }
+
+        async function toggleFavorite(id, el) {
+            try {
+                const res = await fetch(`/api/favorites/toggle/${id}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    el.innerText = data.isFavorite ? '❤️' : '🤍';
+                    if (data.isFavorite) alert('Đã thêm vào mục yêu thích!');
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        // Dropdown toggle logic
+        function toggleAdminMenu() {
+            var menu = document.getElementById('adminMenu');
+            var icon = document.getElementById('adminToggleIcon');
+            if (menu.style.display === 'none') {
+                menu.style.display = 'flex';
+                icon.innerText = '▲';
+            } else {
+                menu.style.display = 'none';
+                icon.innerText = '▼';
+            }
+        }
+    </script>
+</body>
+</html>

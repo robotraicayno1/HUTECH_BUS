@@ -1,0 +1,257 @@
+:root {
+    --primary: #f59e0b; /* Màu Cam HUTECH */
+    --primary-hover: #d97706;
+    --bg-dark: #0f172a;
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --border-color: rgba(255, 255, 255, 0.1);
+    
+    --seat-free: rgba(255, 255, 255, 0.1);
+    --seat-selected: #10b981; /* Màu xanh lá */
+    --seat-booked: #ef4444;   /* Màu đỏ */
+    
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    background-image: radial-gradient(circle at top right, rgba(245, 158, 11, 0.15), transparent 40%),
+                      radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.1), transparent 40%);
+    min-height: 100vh;
+}
+
+/* Glassmorphism Utilities */
+.glass-header {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+.logo span { color: var(--primary); }
+
+/* Bộ đếm ngược */
+.countdown-widget {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(239, 68, 68, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.countdown-widget .label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.countdown-widget .timer {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ef4444;
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+/* Bố cục chính */
+.app-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.booking-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    padding: 2rem;
+    align-items: start;
+}
+
+/* Sơ đồ xe buýt */
+.bus-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.steering-wheel {
+    width: 100%;
+    text-align: right;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px dashed var(--border-color);
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Cấu trúc lưới ghế (4 cột, 1 khoảng trống giữa tạo lối đi) */
+.seats-container {
+    display: grid;
+    grid-template-columns: repeat(5, 50px);
+    gap: 10px;
+    margin-bottom: 2rem;
+}
+
+/* Thiết kế từng ghế */
+.seat {
+    width: 50px;
+    height: 50px;
+    background: var(--seat-free);
+    border: 1px solid var(--border-color);
+    border-radius: 8px 8px 4px 4px; /* Mô phỏng hình cái ghế */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+    position: relative;
+}
+
+/* Tạo độ sâu cho ghế */
+.seat::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    width: 80%;
+    height: 4px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+}
+
+/* Lối đi (cột giữa) */
+.aisle {
+    width: 50px;
+    pointer-events: none;
+}
+
+/* Trạng thái Hover (chỉ nháy nếu ghế trống) */
+.seat:not(.booked):not(.selected):not(.aisle):hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Ghế đã đặt */
+.seat.booked {
+    background: var(--seat-booked);
+    border-color: #dc2626;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Ghế đang chọn */
+.seat.selected {
+    background: var(--seat-selected);
+    border-color: #059669;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Chú thích ghế */
+.seat-legend {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    width: 100%;
+    justify-content: center;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+.seat-badge {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+.seat-badge.available { background: var(--seat-free); border: 1px solid var(--border-color); }
+.seat-badge.selected { background: var(--seat-selected); }
+.seat-badge.booked { background: var(--seat-booked); opacity: 0.6; }
+
+/* Bảng tóm tắt đặt vé */
+.booking-summary h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+}
+.summary-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+}
+.detail-row span { color: var(--text-muted); }
+.divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 0.5rem 0;
+}
+.detail-row.total strong {
+    font-size: 1.25rem;
+    color: var(--primary);
+}
+
+/* Nút thanh toán */
+.btn-checkout {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.btn-checkout:hover:not([disabled]) {
+    background: var(--primary-hover);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
+.btn-checkout[disabled] {
+    background: var(--seat-free);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .booking-content { grid-template-columns: 1fr; }
+}
