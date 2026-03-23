@@ -73,6 +73,19 @@
         <a href="/notifications" class="nav-link">Thông báo</a>
         <a href="/driver/app" class="nav-link" style="background: rgba(255,255,255,0.1); border-left: 3px solid #ff6b00;">📱 Driver/Lơ xe App</a>
         
+        <hr style="border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
+        <div style="font-size: 0.75rem; letter-spacing: 1px; color: rgba(255,255,255,0.5); font-weight: bold; margin-bottom: 5px; padding-left: 18px;">QUẢN TRỊ ADMIN</div>
+        
+        <a href="javascript:void(0)" onclick="toggleAdminMenu()" class="nav-link" style="justify-content: space-between;">
+            Tính năng quản lý <span id="adminToggleIcon">▼</span>
+        </a>
+        <div id="adminMenu" style="display: none; padding-left: 15px; flex-direction: column;">
+            <a href="/admin/dashboard" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Tổng quan</a>
+            <a href="/admin/vehicles" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Quản lý Xe Bus</a>
+            <a href="/admin/routes" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Quản lý Tuyến</a>
+            <a href="/admin/stops" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Quản lý Trạm dừng</a>
+        </div>
+        
         <div style="flex: 1;"></div>
         <a href="#" class="nav-link">Cài đặt tài khoản</a>
     </div>
@@ -86,7 +99,9 @@
             <div class="user-profile">
                 <!-- Sử dụng username từ model thay vì #authentication để an toàn hơn -->
                 <div class="user-avatar" th:text="${username != null ? username : 'US'}">HT</div>
-                <a href="/logout" class="btn-logout">Đăng xuất</a>
+                <form th:action="@{/logout}" method="post" style="margin: 0; padding: 0;">
+                    <button type="submit" class="btn-logout" style="border: none; cursor: pointer;">Đăng xuất</button>
+                </form>
             </div>
         </div>
 
@@ -159,6 +174,19 @@
                 colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.H
             });
+        }
+
+        // Dropdown toggle logic
+        function toggleAdminMenu() {
+            var menu = document.getElementById('adminMenu');
+            var icon = document.getElementById('adminToggleIcon');
+            if (menu.style.display === 'none') {
+                menu.style.display = 'flex';
+                icon.innerText = '▲';
+            } else {
+                menu.style.display = 'none';
+                icon.innerText = '▼';
+            }
         }
     </script>
 </body>
