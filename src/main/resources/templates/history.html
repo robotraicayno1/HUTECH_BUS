@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECHBUS - Lịch sử chuyến đi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ff6b00;
+            --secondary-color: #003366;
+            --bg-color: #f0f2f5;
+            --card-shadow: 0 4px 25px rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body { display: flex; height: 100vh; background-color: var(--bg-color); color: #333; }
+
+        /* Sidebar Styling */
+        .sidebar { width: 280px; background: var(--secondary-color); color: white; padding: 35px 25px; display: flex; flex-direction: column; }
+        .sidebar h2 { font-size: 1.6rem; margin-bottom: 50px; font-weight: 800; letter-spacing: -1px; }
+        .sidebar h2 span { color: var(--primary-color); }
+        .nav-link { 
+            display: flex; align-items: center; padding: 14px 18px; color: rgba(255,255,255,0.7); 
+            text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .nav-link:hover, .nav-link.active { background: rgba(255,107,0,1); color: white; box-shadow: 0 4px 15px rgba(255,107,0,0.3); }
+
+        /* Main Content Styling */
+        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        
+        .content-card { background: white; padding: 30px; border-radius: 20px; box-shadow: var(--card-shadow); }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; padding: 15px; border-bottom: 2px solid #f0f0f0; color: #888; font-size: 0.85rem; text-transform: uppercase; }
+        td { padding: 20px 15px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+        
+        .route-info h4 { font-size: 1rem; color: var(--secondary-color); }
+        .route-info p { font-size: 0.85rem; color: #999; margin-top: 4px; }
+        
+        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .status-completed { background: #e8f5e9; color: #2e7d32; }
+        .status-cancelled { background: #ffebee; color: #c62828; }
+
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>HUTECH<span>BUS</span></h2>
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+        <a href="/routes" class="nav-link">Tra cứu lộ trình</a>
+        <a href="/history" class="nav-link active">Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link">Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link">Thông báo</a>
+        
+        <div style="flex: 1;"></div>
+        <a href="#" class="nav-link">Cài đặt tài khoản</a>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <p style="color: #888; font-size: 0.9rem;">Xem lại các hành trình của bạn</p>
+                <h1>Lịch sử chuyến đi</h1>
+            </div>
+            <a href="/dashboard" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Quay lại Dashboard ➔</a>
+        </div>
+
+        <div class="content-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ngày & Giờ</th>
+                        <th>Lộ trình & Tuyến</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                        <td>
+                            <div class="route-info">
+                                <h4>Campus E ⮕ Campus B</h4>
+                                <p>Tuyến 01 • Xe: 51B-123.45</p>
+                            </div>
+                        </td>
+                        <td><span class="status-badge status-completed">Đã hoàn thành</span></td>
+                        <td><a href="#" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: none; font-weight: 500;">Chi tiết</a></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600;">18/03/2026</div>
+                            <div style="color: #999; font-size: 0.8rem;">07:45</div>
+                        </td>
+                        <td>
+                            <div class="route-info">
+                                <h4>Trạm Ung Văn Khiêm ⮕ Campus E</h4>
+                                <p>Tuyến 167 • Xe: 51A-999.88</p>
+                            </div>
+                        </td>
+                        <td><span class="status-badge status-completed">Đã hoàn thành</span></td>
+                        <td><a href="#" style="color: var(--primary-color); font-size: 0.9rem; text-decoration: none; font-weight: 500;">Chi tiết</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
