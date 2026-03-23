@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECH BUS - Đặt chỗ & Thanh toán</title>
+    <!-- Gắn file CSS giao diện -->
+    <link rel="stylesheet" th:href="@{/css/booking.css}">
+    <!-- Google Fonts cho Typography hiện đại -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header với hiệu ứng Glassmorphism -->
+        <header class="glass-header">
+            <div class="logo">
+                <h1>HUTECH<span>BUS</span></h1>
+            </div>
+            <!-- Bộ đếm ngược thời gian giữ chỗ -->
+            <div class="countdown-widget">
+                <span class="label">Thời gian giữ chỗ:</span>
+                <span id="countdown-timer" class="timer">30:00</span>
+            </div>
+        </header>
+
+        <main class="booking-content">
+            <!-- Khu vực sơ đồ xe buýt -->
+            <section class="bus-layout glass-card">
+                <div class="steering-wheel">🚍 Đầu xe</div>
+                
+                <div class="seats-container" id="seats-container">
+                    <!-- Javascript sẽ render ghế tại đây -->
+                </div>
+                
+                <div class="seat-legend">
+                    <div class="legend-item">
+                        <div class="seat-badge available"></div> Trống
+                    </div>
+                    <div class="legend-item">
+                        <div class="seat-badge selected"></div> Đang chọn
+                    </div>
+                    <div class="legend-item">
+                        <div class="seat-badge booked"></div> Đã đặt
+                    </div>
+                </div>
+            </section>
+
+            <!-- Khu vực thông tin thanh toán -->
+            <aside class="booking-summary glass-card">
+                <h2>Chi Tiết Đặt Chỗ</h2>
+                <div class="summary-details">
+                    <div class="detail-row">
+                        <span>Tuyến:</span>
+                        <strong>Khu A - Khu E</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Giờ chạy:</span>
+                        <strong>07:30 AM</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Ghế đã chọn:</span>
+                        <strong id="selected-seats-list">Chưa chọn</strong>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="detail-row total">
+                        <span>Tổng tiền:</span>
+                        <strong id="total-price">0 VNĐ</strong>
+                    </div>
+                </div>
+                <button class="btn-checkout" id="btn-checkout" disabled>Thanh Toán Bằng QR</button>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Modal Thanh Toán VietQR -->
+    <div id="payment-modal" class="payment-modal hidden">
+        <div class="modal-content glass-card">
+            <h2 style="color: var(--primary); margin-bottom: 1rem; text-align: center;">Thanh Toán Ngân Hàng</h2>
+            <p style="text-align: center; margin-bottom: 1rem; color: var(--text-muted);">
+                Vui lòng mở ứng dụng ngân hàng hoặc ví điện tử để quét mã QR bên dưới.
+            </p>
+            
+            <div class="qr-wrapper" style="text-align: center; margin: 0 auto 1.5rem; padding: 0.5rem; background: #fff; border-radius: 12px; max-width: 200px;">
+                <img id="vietqr-img" src="" alt="Mã QR Thanh Toán VietQR" style="max-width: 100%; height: auto; border-radius: 8px;">
+            </div>
+            
+            <div style="display: none;">
+                <span id="modal-total-amount"></span>
+                <span id="modal-transfer-content"></span>
+            </div>
+            
+            <div id="payment-status" class="hidden" style="text-align: center; margin-bottom: 1rem; color: #10b981; font-weight: 600;">
+                
+            </div>
+        </div>
+    </div>
+
+    <!-- Tích hợp logic xử lý JS -->
+    <script th:src="@{/js/booking.js}"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECH BUS - Vé Điện Tử</title>
+    
+    <!-- Dùng chung theme CSS -->
+    <link rel="stylesheet" th:href="@{/css/booking.css}">
+    <!-- CSS dành riêng cho thiết kế thẻ vé -->
+    <link rel="stylesheet" th:href="@{/css/ticket.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono&display=swap" rel="stylesheet">
+    
+    <!-- Thư viện nguồn mở qrcode.js từ CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="glass-header">
+            <div class="logo">
+                <h1>HUTECH<span>BUS</span></h1>
+            </div>
+            <!-- Bộ đếm ngược thời gian của Mã QR -->
+            <div class="countdown-widget">
+                <span class="label">Mã QR hết hạn sau:</span>
+                <span id="countdown-timer" class="timer">30:00</span>
+            </div>
+            <a href="/my-tickets" class="btn-back">← Lịch sử chuyến đi</a>
+        </header>
+
+        <main class="ticket-wrapper">
+            <!-- Thẻ vé chính -->
+            <div class="ticket-card glass-card">
+                <!-- Khu vực đầu vé -->
+                <div class="ticket-header">
+                    <h2>VÉ LÊN XE (BOARDING PASS)</h2>
+                    <span id="ticket-status-badge" class="status-badge success">Đã Thanh Toán</span>
+                </div>
+
+                <!-- Thông tin hành trình -->
+                <div class="ticket-body">
+                    <div class="route-info">
+                        <div class="point">
+                            <span class="label">Từ</span>
+                            <strong>KHU A</strong>
+                        </div>
+                        <div class="bus-icon">🚌</div>
+                        <div class="point text-right">
+                            <span class="label">Đến</span>
+                            <strong>KHU E</strong>
+                        </div>
+                    </div>
+
+                    <div class="details-grid">
+                        <div class="detail-box">
+                            <span class="label">Hành Khách</span>
+                            <strong>Nguyễn Văn A</strong>
+                        </div>
+                        <div class="detail-box text-right">
+                            <span class="label">Giờ Lên Xe</span>
+                            <strong>07:30 AM</strong>
+                        </div>
+                        <div class="detail-box">
+                            <span class="label">Số Ghế</span>
+                            <strong id="ticket-seats">...</strong>
+                        </div>
+                        <div class="detail-box text-right">
+                            <span class="label">Ngày</span>
+                            <strong id="ticket-date">...</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Khu vực chứa Mã QR -->
+                <div class="ticket-footer">
+                    <div class="qr-container" style="display: flex; justify-content: center;">
+                        <!-- Thẻ div dành cho thư viện qrcode vẽ canvas vào -->
+                        <div id="qrcode"></div>
+                    </div>
+                    <p class="qr-hint" style="margin-top: 1rem;">Vui lòng đưa mã này cho tài xế hoặc quét tại máy check-in cửa xe.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Tích hợp logic gắn QR -->
+    <script th:src="@{/js/ticket.js}"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECH BUS - Vé Đã Đặt</title>
+    <!-- Gắn file CSS chung của hệ thống đặt chỗ -->
+    <link rel="stylesheet" th:href="@{/css/booking.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Tùy chỉnh CSS riêng cho trang danh sách vé */
+        .ticket-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2.5rem;
+        }
+        .ticket-item {
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .ticket-item:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(245, 158, 11, 0.2);
+            border-color: var(--primary); /* Làm sáng viền khi rà chuột */
+        }
+        /* Cấu trúc header của từng vé nhỏ */
+        .ticket-item-header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+        .ticket-id {
+            color: var(--primary);
+            font-family: monospace;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+        /* Giao diện trạng thái khi chưa có tính năng */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+            grid-column: 1 / -1;
+        }
+        .empty-state h3 {
+            color: var(--text-main);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        /* Trang trí biểu tượng vé */
+        .ticket-icon {
+            position: absolute;
+            bottom: -20px;
+            right: -10px;
+            font-size: 6rem;
+            opacity: 0.05;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header điều hướng phía trên -->
+        <header class="glass-header">
+            <div class="logo">
+                <h1>HUTECH<span>BUS</span></h1>
+            </div>
+            <div>
+                <!-- Các liên kết điều hướng mượt mà -->
+                <a href="/routes" class="btn-back" style="margin-right: 20px;">Tuyến xe</a>
+                <a href="/booking" class="btn-back" style="color: var(--text-main); font-weight: bold;">⊕ Đặt vé mới</a>
+            </div>
+        </header>
+
+        <main style="padding: 2.5rem 0;">
+            <h2 style="color: var(--primary); font-size: 1.8rem;">Lịch Sử Chuyến Đi Của Bạn</h2>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Nhấn vào thẻ vé bất kỳ để xem lại Mã QR Check-in.</p>
+            
+            <!-- Khu vực danh sách vé động -->
+            <div class="ticket-list" id="ticket-list-container">
+                <!-- Javascript sẽ nối danh sách vé vào thẻ này -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Script nạp dữ liệu vé đã lưu tại Client -->
+    <script th:src="@{/js/my-tickets.js}"></script>
+</body>
+</html>

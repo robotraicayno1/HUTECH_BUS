@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECHBUS - Phê duyệt vé</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #ff6b00;
+            --secondary-color: #003366;
+            --bg-color: #f0f2f5;
+            --card-shadow: 0 4px 25px rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body { display: flex; height: 100vh; background-color: var(--bg-color); color: #333; }
+
+        /* Sidebar Styling */
+        .sidebar { width: 280px; background: var(--secondary-color); color: white; padding: 35px 25px; display: flex; flex-direction: column; }
+        .sidebar h2 { font-size: 1.6rem; margin-bottom: 50px; font-weight: 800; letter-spacing: -1px; }
+        .sidebar h2 span { color: var(--primary-color); }
+        .nav-link { 
+            display: flex; align-items: center; padding: 14px 18px; color: rgba(255,255,255,0.7); 
+            text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .nav-link:hover, .nav-link.active { background: rgba(255,107,0,1); color: white; box-shadow: 0 4px 15px rgba(255,107,0,0.3); }
+
+        /* Main Content Styling */
+        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .user-profile { display: flex; align-items: center; gap: 15px; }
+        .user-avatar { width: 45px; height: 45px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; transition: transform 0.3s; }
+        .user-avatar:hover { transform: scale(1.1); }
+        
+        .btn-logout { background: #f83a3a; color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: 0.3s; }
+        .btn-logout:hover { background: #d32f2f; }
+
+        /* Dashboard Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 25px; border-radius: 20px; box-shadow: var(--card-shadow); border-left: 5px solid var(--primary-color); }
+        .stat-card h3 { font-size: 0.85rem; color: #888; text-transform: uppercase; margin-bottom: 10px; }
+        .stat-card .value { font-size: 1.8rem; font-weight: 700; color: var(--secondary-color); }
+
+        .dashboard-layout { display: grid; grid-template-columns: 1fr 320px; gap: 25px; }
+        
+        .content-card { background: white; padding: 30px; border-radius: 20px; box-shadow: var(--card-shadow); height: fit-content; }
+        .content-card h2 { margin-bottom: 20px; font-size: 1.25rem; color: var(--secondary-color); border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
+
+        /* QR Section */
+        .qr-section { text-align: center; }
+        #qrcode { margin: 20px auto; padding: 15px; background: white; border-radius: 10px; width: fit-content; border: 1px solid #eee; }
+        .qr-info { font-size: 0.85rem; color: #666; margin-top: 10px; }
+
+        /* Journey List */
+        .journey-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f5f5f5; }
+        .journey-info h4 { font-size: 0.95rem; color: #333; }
+        .journey-info p { font-size: 0.8rem; color: #999; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; background: #e8f5e9; color: #2e7d32; }
+
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>HUTECH<span>BUS</span></h2>
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+        <a href="/routes" class="nav-link">Tra cứu lộ trình</a>
+        <div id="admin-sidebar-link" style="display: none;">
+        <div class="nav-link" style="margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="const menu = this.nextElementSibling; menu.style.display = menu.style.display === 'none' ? 'block' : 'none'; this.querySelector('span').style.transform = menu.style.display === 'none' ? 'rotate(0deg)' : 'rotate(180deg)';">
+            Quản lý loại vé
+            <span style="font-size: 0.8rem; transition: transform 0.3s; display: inline-block;">▼</span>
+        </div>
+        <div id="admin-submenu" style="display: none; padding-bottom: 5px;">
+            <a href="/approve-tickets" class="nav-link active" style="background: rgba(255,107,0,1); color: #fff; border-left: 3px solid #fff; margin-left: 15px; padding: 8px 15px; font-size: 0.9rem; margin-bottom: 8px;">&#x21B3; Phê duyệt vé</a>
+        </div>
+    </div>
+        <a href="/history" class="nav-link">Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link">Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link">Thông báo</a>
+        
+        <!-- Link dành riêng cho Admin -->
+        
+        
+        <div style="flex: 1;"></div>
+        <a href="#" class="nav-link">Cài đặt tài khoản</a>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <p style="color: #888; font-size: 0.9rem;">Chào mừng quay trở lại,</p>
+                <h1 th:text="${user != null ? user.fullName : (username != null ? username : 'Guest')}">Họ và tên</h1>
+            </div>
+            <div class="user-profile">
+                <!-- Sử dụng username từ model thay vì #authentication để an toàn hơn -->
+                <div class="user-avatar" th:text="${username != null ? username : 'US'}">HT</div>
+                <a href="/logout" class="btn-logout">Đăng xuất</a>
+            </div>
+        </div>
+
+        <div class="dashboard-layout">
+            <!-- BẢNG ADMIN QUẢN LÝ PHÊ DUYỆT -->
+            <div id="admin-panel-container" class="content-card" style="display: block; grid-column: 1 / -1; margin-top: 20px;">
+                <h2 style="color: #003366; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; font-weight: 700; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Kiểm Tra - Phê Duyệt Vé</h2>
+                <div id="admin-pending-tickets-list" style="margin-top: 15px;">
+                    <!-- JS sẽ nối danh sách vé chờ duyệt vào đây -->
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 40px;">
+                    <h2 style="color: #64748b; font-size: 1.4rem; margin: 0;">Lịch sử phê duyệt</h2>
+                    <input type="text" id="admin-search-history" placeholder="Tìm tên hành khách..." style="padding: 8px 15px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; width: 250px;" oninput="renderAdminHistoryTickets()">
+                </div>
+                <div id="admin-history-tickets-list" style="margin-top: 15px;">
+                    <!-- JS sẽ đổ danh sách vé đã duyệt/từ chối vào đây -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        // Generate QR Code using username passed from controller
+        const currentUsername = /*[[${username}]]*/ 'HT-User';
+        
+        if (currentUsername && !currentUsername.toLowerCase().includes('admin')) {
+            new QRCode(document.getElementById("qrcode"), {
+                text: "HUTECHBUS-" + currentUsername,
+                width: 160,
+                height: 160,
+                colorDark : "#003366",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+        
+        // Lấy tên người dùng từ model
+        const loggedInUser = /*[[${username}]]*/ 'null';
+
+        // Biến lưu trữ dữ liệu lịch sử vé ban đầu
+        let allHistoryTickets = [];
+
+        // Code kiểm tra vai trò để ẩn/hiện logic Admin
+        if (loggedInUser && loggedInUser.toLowerCase().includes('admin')) {
+            // Ẩn vùng "Hành trình gần đây" của User
+            const userJourneys = document.getElementById('user-journeys-container');
+            if(userJourneys) userJourneys.style.display = 'none';
+            
+            // Ẩn phần QR Check-in của Sinh viên
+            const userQr = document.getElementById('user-qr-container');
+            if(userQr) userQr.style.display = 'none';
+            
+            // Hiện bảng Quản trị của Admin
+            const adminPanel = document.getElementById('admin-panel-container');
+            if(adminPanel) adminPanel.style.display = 'block';
+            
+            // Hiển thị phần Admin sidebar link
+            const adminSidebarLink = document.getElementById('admin-sidebar-link');
+            if(adminSidebarLink) adminSidebarLink.style.display = 'block';
+            
+            // Xóa lưới col-md-8 / col-md-4 để bảng Admin full width
+            const dashLayout = document.querySelector('.dashboard-layout');
+            if(dashLayout) dashLayout.style.gridTemplateColumns = '1fr';
+
+            // Xử lý logic render vé đang pending từ Server MongoDB
+            function renderAdminPendingTickets() {
+                const container = document.getElementById('admin-pending-tickets-list');
+                
+                fetch('/api/tickets/pending')
+                .then(res => res.json())
+                .then(pendingTickets => {
+                    if (!pendingTickets || pendingTickets.length === 0) {
+                        container.innerHTML = '<p style="color: #666; font-style: italic; text-align: center; padding: 20px;">Hiện tại không có giao dịch nào đang chờ duyệt.</p>';
+                        return;
+                    }
+                    
+                    let html = '';
+                    let autoCheckingTickets = window.autoCheckingTickets || new Set();
+                    window.autoCheckingTickets = autoCheckingTickets;
+                    
+                    pendingTickets.forEach(t => {
+                        // Tự động kiểm tra ngân hàng (Giả lập webhook nhận tiền mất 5s)
+                        if (!autoCheckingTickets.has(t.id)) {
+                            autoCheckingTickets.add(t.id);
+                            setTimeout(() => {
+                                console.log('Tự động nhận diện GD thành công cho vé: ' + t.id);
+                                // Tự động click gọi API phê duyệt
+                                if (document.getElementById('admin-panel-container')) {
+                                    adminReviewTicket(t.id, 'success');
+                                }
+                            }, 5000 + Math.random() * 2000); // Đợi 5-7 giây
+                        }
+                        
+                        html += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; background: #fafafa; transition: all 0.3s; border-left: 4px solid #f59e0b;">
+                            <div>
+                                <strong style="color: var(--primary-color); font-size: 1.1rem;">#${t.id}</strong> - <span>Hành khách: <b>${t.username}</b></span><br>
+                                <span style="font-size: 0.85rem; color: #555;">Tuyến: <span style="font-weight: 500;">${t.route}</span> | ${t.date} ${t.time} | Ghế: <b style="color: #003366;">${t.seats}</b> | Tổng tiền: <b style="color: #ff6b00; font-size: 1.05rem;">${t.total.toLocaleString('vi-VN')} VNĐ</b></span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px; min-width: 140px;">
+                                <div style="height: 20px; text-align: center; margin-bottom: 4px;"></div>
+                                <div style="display: flex; gap: 5px;">
+                                    <button onclick="adminReviewTicket('${t.id}', 'success')" style="flex:1; background: #003366; color: white; border: none; cursor: pointer; font-weight: 600; font-size: 0.8rem; padding: 6px 8px; border-radius: 6px; display: flex; justify-content: center; align-items: center;" title="Đã chuyển tiền đúng">
+                                        Duyệt
+                                    </button>
+                                    <button onclick="adminReviewTicket('${t.id}', 'failed')" style="flex:1; background: #fee2e2; color: #ef4444; border: none; cursor: pointer; font-weight: 600; font-size: 0.8rem; padding: 6px 8px; border-radius: 6px; display: flex; justify-content: center; align-items: center;" title="Chưa nhận được tiền">
+                                        Từ chối
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error('Lỗi khi tải danh sách chờ duyệt:', err);
+                    container.innerHTML = '<p style="color: red; text-align: center; padding: 20px;">Lỗi tải dữ liệu. Vui lòng F5 lại trang.</p>';
+                });
+            }
+            
+            // Xử lý hiển thị ra UI danh sách lịch sử phê duyệt
+            function renderAdminHistoryTicketsUI(tickets) {
+                const container = document.getElementById('admin-history-tickets-list');
+                if (!tickets || tickets.length === 0) {
+                    container.innerHTML = '<p style="color: #666; font-style: italic; text-align: center; padding: 20px;">Không tìm thấy lịch sử phù hợp.</p>';
+                    return;
+                }
+
+                let html = '';
+                tickets.forEach(t => {
+                    let isSuccess = t.status === 'success';
+                    let statusHtml = isSuccess 
+                        ? `<div style="background: #003366; color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; box-shadow: 0 4px 6px rgba(0,51,102,0.2);">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> Xác nhận
+                           </div>`
+                        : `<div style="background: #fee2e2; color: #ef4444; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg> Từ chối
+                           </div>`;
+                           
+                    let actionButton = isSuccess
+                        ? `<button onclick="adminReviewTicket('${t.id}', 'failed')" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: 0.2s; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'">
+                            Từ chối
+                           </button>`
+                        : `<button onclick="adminReviewTicket('${t.id}', 'success')" style="background: transparent; border: 1px solid #003366; color: #003366; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: 0.2s; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;" onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='transparent'">
+                            Duyệt
+                           </button>`;
+
+                    // Nút Xóa vé
+                    let deleteBtn = `<button onclick="adminDeleteTicket('${t.id}')" style="background: transparent; border: 1px solid #64748b; color: #64748b; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: 0.2s; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a'" onmouseout="this.style.background='transparent'; this.style.color='#64748b'">Xóa</button>`;
+                        
+                    html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 12px; background: #fff;">
+                        <div>
+                            <strong style="color: var(--primary-color); font-size: 1.1rem;">#${t.id}</strong> - <span>Hành khách: <b>${t.username}</b></span><br>
+                            <span style="font-size: 0.85rem; color: #555;">Tuyến: <span style="font-weight: 500;">${t.route}</span> | ${t.date || ''} ${t.time || ''} | Ghế: <b style="color: #003366;">${t.seats || 'N/A'}</b> | Tổng tiền: <b style="color: #ff6b00; font-size: 1.05rem;">${t.total ? t.total.toLocaleString('vi-VN') : '0'} VNĐ</b></span>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            ${statusHtml}
+                            ${actionButton}
+                            ${deleteBtn}
+                        </div>
+                    </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }
+
+            // Xử lý logic load API LỊCH SỬ (Đã duyệt / Từ chối) và Lọc theo Tìm kiếm
+            function renderAdminHistoryTickets() {
+                const searchInput = document.getElementById('admin-search-history');
+                const query = searchInput ? searchInput.value.toLowerCase() : '';
+
+                // Giao thức lấy API 1 lần hay mỗi lần gọi? Ở đây dùng fetch lấy mới nhất
+                fetch('/api/tickets/history')
+                .then(res => res.json())
+                .then(historyTickets => {
+                    allHistoryTickets = historyTickets.reverse();
+                    
+                    // Lọc mảng
+                    let filteredTickets = allHistoryTickets.filter(t => {
+                        if (!query) return true;
+                        const fullStr = (t.id + " " + t.username + " " + t.route).toLowerCase();
+                        return fullStr.includes(query);
+                    });
+
+                    renderAdminHistoryTicketsUI(filteredTickets);
+                })
+                .catch(err => console.error(err));
+            }
+            
+            // Xóa vé vĩnh viễn
+            window.adminDeleteTicket = function(ticketId) {
+                fetch('/api/tickets/' + ticketId, {
+                    method: 'DELETE'
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success || data.ok) {
+                        renderAdminHistoryTickets();
+                    } else {
+                        alert('Xóa vé thất bại!');
+                    }
+                })
+                .catch(err => console.error('Lỗi API xóa vé: ', err));
+            };
+            
+            // Hàm tương tác của nút Duyệt / Từ chối gọi lên Backend
+            window.adminReviewTicket = function(ticketId, newStatus) {
+                fetch('/api/tickets/' + ticketId + '/status', {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ status: newStatus })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Cập nhật mượt mà bảng Pending và History
+                        renderAdminPendingTickets();
+                        renderAdminHistoryTickets();
+                    } else {
+                        alert('Lỗi: Không thể cập nhật vé. Chi tiết: ' + data.error);
+                    }
+                })
+                .catch(err => console.error('Lỗi API cập nhật:', err));
+            };
+            
+            // Khởi chạy render lần đầu
+            renderAdminPendingTickets();
+            renderAdminHistoryTickets();
+            
+            // TỰ ĐỘNG CẬP NHẬT: Quét dữ liệu mỗi 2 giây để hiển thị vé mới real-time (Polling)
+            setInterval(() => {
+                renderAdminPendingTickets();
+                renderAdminHistoryTickets();
+            }, 2000);
+        }
+    
+        function showAdminPanel() {
+            document.getElementById('admin-panel-container').style.display = 'block';
+            if(typeof loadPendingTickets === 'function') loadPendingTickets();
+        }
+</script>
+</body>
+</html>

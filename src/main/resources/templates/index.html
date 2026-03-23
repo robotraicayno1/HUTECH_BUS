@@ -68,9 +68,21 @@
         <h2>HUTECH<span>BUS</span></h2>
         <a href="/dashboard" class="nav-link active">Dashboard</a>
         <a href="/routes" class="nav-link">Tra cứu lộ trình</a>
+        <div id="admin-sidebar-link" style="display: none;">
+        <div class="nav-link" style="margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="const menu = this.nextElementSibling; menu.style.display = menu.style.display === 'none' ? 'block' : 'none'; this.querySelector('span').style.transform = menu.style.display === 'none' ? 'rotate(0deg)' : 'rotate(180deg)';">
+            Quản lý loại vé
+            <span style="font-size: 0.8rem; transition: transform 0.3s; display: inline-block;">▼</span>
+        </div>
+        <div id="admin-submenu" style="display: none; padding-bottom: 5px;">
+            <a href="/approve-tickets" class="nav-link" style="background: rgba(255,255,255,0.1); color: #fff; border-left: 3px solid #ef4444; margin-left: 15px; padding: 8px 15px; font-size: 0.9rem; margin-bottom: 8px;">&#x21B3; Phê duyệt vé</a>
+        </div>
+    </div>
         <a href="/history" class="nav-link">Lịch sử chuyến đi</a>
         <a href="/favorites" class="nav-link">Đã lưu / Yêu thích</a>
         <a href="/notifications" class="nav-link">Thông báo</a>
+        
+        <!-- Link dành riêng cho Admin -->
+        
         
         <div style="flex: 1;"></div>
         <a href="#" class="nav-link">Cài đặt tài khoản</a>
@@ -105,7 +117,7 @@
         </div>
 
         <div class="dashboard-layout">
-            <div class="content-card">
+            <div id="user-journeys-container" class="content-card">
                 <h2>Hành trình gần đây</h2>
                 <div class="journey-list">
                     <div class="journey-item">
@@ -133,7 +145,7 @@
                 <a href="/routes" style="display: block; text-align: center; margin-top: 20px; color: var(--primary-color); text-decoration: none; font-size: 0.9rem; font-weight: 600;">Xem tất cả lịch sử ➔</a>
             </div>
 
-            <div class="content-card qr-section">
+            <div id="user-qr-container" class="content-card qr-section">
                 <h2>Mã Check-in QR</h2>
                 <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Dùng mã này khi lên xe bus</p>
                 <div id="qrcode"></div>
@@ -143,13 +155,17 @@
                 </div>
                 <p style="margin-top: 15px; font-size: 0.75rem; color: #aaa;">Mã tự động làm mới sau mỗi 60s</p>
             </div>
-        </div>
+            
+
+            
+            </div>
     </div>
 
     <script th:inline="javascript">
         // Generate QR Code using username passed from controller
         const currentUsername = /*[[${username}]]*/ 'HT-User';
-        if (currentUsername) {
+        
+        if (currentUsername && !currentUsername.toLowerCase().includes('admin')) {
             new QRCode(document.getElementById("qrcode"), {
                 text: "HUTECHBUS-" + currentUsername,
                 width: 160,
@@ -159,6 +175,11 @@
                 correctLevel : QRCode.CorrectLevel.H
             });
         }
-    </script>
+        
+        // Lấy tên người dùng từ model
+        const loggedInUser = /*[[${username}]]*/ 'null';
+
+        
+        </script>
 </body>
 </html>

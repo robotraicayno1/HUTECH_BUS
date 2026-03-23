@@ -44,4 +44,13 @@ public class LoginController {
         }
         return "notifications";
     }
+
+    /** Hiển thị trang phê duyệt vé cho Admin */
+    @GetMapping("/approve-tickets")
+    public String approveTickets(Model model, Principal principal) {
+        if (principal != null) {
+            model.addAttribute("username", principal.getName());
+        }
+        return "approve-tickets";
+    }
 }
