@@ -6,11 +6,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import java.security.Principal;
 
+import com.example.HUTECHBUS.repository.UserRepository;
+import com.example.HUTECHBUS.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
+
 /**
  * Xử lý các trang điều hướng chính: đăng nhập, dashboard, và thông báo.
  */
 @Controller
 public class LoginController {
+
+    @Autowired
+    private UserRepository userRepository;
 
     /** Hiển thị trang đăng nhập */
     @GetMapping("/login")
@@ -32,6 +39,9 @@ public class LoginController {
     public String dashboard(Model model, Principal principal) {
         if (principal != null) {
             model.addAttribute("username", principal.getName());
+            userRepository.findByUsername(principal.getName()).ifPresent(user -> {
+                model.addAttribute("user", user);
+            });
         }
         return "index";
     }

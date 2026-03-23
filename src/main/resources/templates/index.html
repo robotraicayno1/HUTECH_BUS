@@ -100,7 +100,8 @@
             </div>
             <div class="stat-card">
                 <h3>Điểm tích lũy (H-Point)</h3>
-                <div class="value" style="color: var(--primary-color);">450</div>
+                <div class="value" style="color: var(--primary-color);" th:text="${user != null ? user.hPoints : 0}">0</div>
+                <a href="/points" style="display: block; margin-top: 15px; color: var(--primary-color); text-decoration: none; font-size: 0.85rem; font-weight: 700;">Đổi điểm lấy Voucher ➔</a>
             </div>
         </div>
 
