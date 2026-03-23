@@ -31,11 +31,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const ticketCard = document.createElement('div');
         ticketCard.className = 'glass-card ticket-item';
         
+        // Xác định trạng thái thanh toán và màu sắc
+        const isPaid = ticket.paymentMethod === 'TRANSFER' || ticket.paymentMethod === 'VNPAY';
+        const statusText = isPaid ? 'Đã Thanh Toán' : 'Thanh Toán Tại Xe';
+        const statusColor = isPaid ? '#10b981' : '#f97316'; // Xanh vs Cam
+        const statusBg = isPaid ? 'rgba(16, 185, 129, 0.1)' : 'rgba(249, 115, 22, 0.1)';
+
         // Nhồi nội dung HTML vào thẻ vé bằng Template String
         ticketCard.innerHTML = `
             <div class="ticket-item-header">
                 <span class="ticket-id">#${ticket.id}</span>
-                <span style="color: #10b981; font-size: 0.85rem; padding: 3px 8px; background: rgba(16, 185, 129, 0.1); border-radius: 12px;">Đã Thanh Toán</span>
+                <span style="color: ${statusColor}; font-size: 0.85rem; padding: 3px 8px; background: ${statusBg}; border-radius: 12px;">${statusText}</span>
             </div>
             <div style="margin-bottom: 10px; color: var(--text-main);"><strong>Tuyến:</strong> ${ticket.route}</div>
             <div style="margin-bottom: 10px; color: var(--text-muted);"><strong>Thời gian:</strong> ${ticket.date} - ${ticket.time}</div>

@@ -51,7 +51,7 @@
                 <div class="summary-details">
                     <div class="detail-row">
                         <span>Tuyến:</span>
-                        <strong>Khu A - Khu E</strong>
+                        <strong id="route-name-display">Khu A - Khu E</strong>
                     </div>
                     <div class="detail-row">
                         <span>Giờ chạy:</span>
@@ -62,12 +62,24 @@
                         <strong id="selected-seats-list">Chưa chọn</strong>
                     </div>
                     <div class="divider"></div>
+                    <div class="detail-row">
+                        <span>Thanh toán:</span>
+                        <div class="payment-methods" style="display: flex; gap: 10px; margin-top: 5px;">
+                            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="radio" name="paymentMethod" value="TRANSFER" checked> Chuyển khoản
+                            </label>
+                            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="radio" name="paymentMethod" value="CASH"> Tiền mặt
+                            </label>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
                     <div class="detail-row total">
                         <span>Tổng tiền:</span>
                         <strong id="total-price">0 VNĐ</strong>
                     </div>
                 </div>
-                <button class="btn-checkout" id="btn-checkout" disabled>Thanh Toán Bằng QR</button>
+                <button class="btn-checkout" id="btn-checkout" disabled>Tiến Hành Đặt Chỗ</button>
             </aside>
         </main>
     </div>

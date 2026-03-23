@@ -67,7 +67,8 @@
     <div class="sidebar">
         <h2>HUTECH<span>BUS</span></h2>
         <a href="/dashboard" class="nav-link active">Dashboard</a>
-        <a href="/routes" class="nav-link">Tra cứu lộ trình</a>
+        <a href="/my-tickets" class="nav-link">Vé của tôi (Mới)</a>
+        <a href="/routes" class="nav-link">Tra cứu & Đặt chỗ</a>
         <a href="/history" class="nav-link">Lịch sử chuyến đi</a>
         <a href="/favorites" class="nav-link">Đã lưu / Yêu thích</a>
         <a href="/notifications" class="nav-link">Thông báo</a>
@@ -123,27 +124,12 @@
         <div class="dashboard-layout">
             <div class="content-card">
                 <h2>Hành trình gần đây</h2>
-                <div class="journey-list">
+                <div class="journey-list" id="journey-list">
+                    <!-- Sẽ được điền bằng JavaScript dựa trên hutech_my_tickets -->
                     <div class="journey-item">
                         <div class="journey-info">
-                            <h4>Campus A ⮕ Campus E</h4>
-                            <p>Tuyến 01 • Khởi hành 17:15, 19/03/2026</p>
+                            <p class="text-gray-500">Đang tải lịch sử...</p>
                         </div>
-                        <span class="status-badge">Đã hoàn thành</span>
-                    </div>
-                    <div class="journey-item">
-                        <div class="journey-info">
-                            <h4>Campus E ⮕ Campus B</h4>
-                            <p>Tuyến 01 • Khởi hành 08:30, 19/03/2026</p>
-                        </div>
-                        <span class="status-badge">Đã hoàn thành</span>
-                    </div>
-                    <div class="journey-item">
-                        <div class="journey-info">
-                            <h4>Trạm Ung Văn Khiêm ⮕ Campus E</h4>
-                            <p>Tuyến 01 • Khởi hành 07:45, 18/03/2026</p>
-                        </div>
-                        <span class="status-badge">Đã hoàn thành</span>
                     </div>
                 </div>
                 <a href="/routes" style="display: block; text-align: center; margin-top: 20px; color: var(--primary-color); text-decoration: none; font-size: 0.9rem; font-weight: 600;">Xem tất cả lịch sử ➔</a>
@@ -175,7 +161,6 @@
                 correctLevel : QRCode.CorrectLevel.H
             });
         }
-
         // Dropdown toggle logic
         function toggleAdminMenu() {
             var menu = document.getElementById('adminMenu');
@@ -188,6 +173,68 @@
                 icon.innerText = '▼';
             }
         }
+
+        // Hiển thị thông báo từ VNPAY nếu có
+        const urlParams = new URLSearchParams(window.location.search);
+        const vnpStatus = urlParams.get('vnpay_status');
+        if (vnpStatus === 'success') {
+            // Lưu vé vào hutech_my_tickets nếu cần (ở đây ta lấy từ hutech_booked_seats)
+            const bookedSeats = JSON.parse(localStorage.getItem('hutech_booked_seats') || '[]');
+            if (bookedSeats.length > 0) {
+                const myTickets = JSON.parse(localStorage.getItem('hutech_my_tickets') || '[]');
+                const newTicket = {
+                    id: Math.floor(Math.random() * 1000000),
+                    route: "Chuyến vừa đặt",
+                    date: new Date().toLocaleDateString('vi-VN'),
+                    time: new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}),
+                    seats: bookedSeats.join(', '),
+                    total: bookedSeats.length * 10000,
+                    paymentMethod: 'TRANSFER'
+                };
+                myTickets.push(newTicket);
+                localStorage.setItem('hutech_my_tickets', JSON.stringify(myTickets));
+            }
+            
+            alert("🎉 Thanh toán thành công! Vé của bạn đã sẵn sàng.");
+            // Không redirect nữa, ở lại dashboard nhưng xóa query param để tránh lặp
+            window.history.replaceState({}, document.title, "/dashboard");
+        } else if (vnpStatus === 'error') {
+            alert("❌ Thanh toán thất bại hoặc đã bị hủy. Vui lòng thử lại.");
+            window.history.replaceState({}, document.title, "/dashboard");
+        }
+
+        // --- Logic hiển thị danh sách Hành trình gần đây từ LocalStorage ---
+        function renderRecentJourneys() {
+            const listEl = document.getElementById('journey-list');
+            const myTickets = JSON.parse(localStorage.getItem('hutech_my_tickets') || '[]');
+            
+            if (myTickets.length === 0) {
+                listEl.innerHTML = '<p style="color: #888; font-size: 0.9rem; padding: 20px 0;">Chưa có hành trình nào gần đây.</p>';
+                return;
+            }
+
+            let html = '';
+            // Lấy tối đa 3 vé mới nhất
+            myTickets.reverse().slice(0, 3).forEach(ticket => {
+                html += `
+                    <div class="journey-item" style="cursor: pointer;" onclick="viewTicket('${ticket.seats}')">
+                        <div class="journey-info">
+                            <h4>${ticket.route}</h4>
+                            <p>Ghế: ${ticket.seats} • ${ticket.date} ${ticket.time}</p>
+                        </div>
+                        <span class="status-badge">Sẵn sàng</span>
+                    </div>
+                `;
+            });
+            listEl.innerHTML = html;
+        }
+
+        function viewTicket(seats) {
+            localStorage.setItem('hutech_booked_seats', JSON.stringify(seats.split(', ')));
+            window.location.href = '/ticket';
+        }
+
+        renderRecentJourneys();
     </script>
 </body>
 </html>

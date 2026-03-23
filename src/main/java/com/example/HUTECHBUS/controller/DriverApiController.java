@@ -2,9 +2,11 @@ package com.example.HUTECHBUS.controller;
 
 import com.example.HUTECHBUS.model.ActiveTrip;
 import com.example.HUTECHBUS.model.Route;
+import com.example.HUTECHBUS.model.TripHistory;
 import com.example.HUTECHBUS.model.User;
-import com.example.HUTECHBUS.repository.ActiveTripRepository;
+import com.example.HUTECHBUS.repository.ActiveTripMongoRepository;
 import com.example.HUTECHBUS.repository.RouteRepository;
+import com.example.HUTECHBUS.repository.TripHistoryRepository;
 import com.example.HUTECHBUS.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,13 +28,16 @@ import java.util.Optional;
 public class DriverApiController {
 
     @Autowired
-    private ActiveTripRepository activeTripRepository;
+    private ActiveTripMongoRepository activeTripRepository;
 
     @Autowired
     private RouteRepository routeRepository;
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TripHistoryRepository tripHistoryRepository;
 
     @GetMapping("/active")
     public ResponseEntity<?> getActiveTrip(Principal principal) {
@@ -76,12 +83,30 @@ public class DriverApiController {
         }
         trip.setStatus("COMPLETED");
         activeTripRepository.save(trip);
-        return ResponseEntity.ok(Map.of("message", "Da ket thuc chuyen xe"));
+
+        // --- GHI LẠI LỊCH SỬ CHO TẤT CẢ SINH VIÊN TRÊN XE ---
+        Map<String, List<Integer>> passengers = trip.getPassengerSeats();
+        if (passengers != null) {
+            passengers.forEach((username, seats) -> {
+                Optional<User> userOpt = userRepository.findByUsername(username);
+                if (userOpt.isPresent()) {
+                    TripHistory history = new TripHistory();
+                    history.setUserId(userOpt.get().getId());
+                    history.setRouteId(trip.getRouteId());
+                    history.setRouteName(trip.getRouteName());
+                    history.setTripDate(LocalDateTime.now());
+                    history.setStatus("COMPLETED");
+                    tripHistoryRepository.save(history);
+                }
+            });
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Da ket thuc chuyen xe va ghi nhan lich su"));
     }
 
     @PostMapping("/{tripId}/toggle-seat")
     public ResponseEntity<?> toggleSeat(@PathVariable String tripId,
-                                        @RequestBody Map<String, Integer> payload,
+                                        @RequestBody Map<String, Object> payload,
                                         Principal principal) {
         Optional<ActiveTrip> tripOpt = activeTripRepository.findById(tripId);
         if (tripOpt.isEmpty()) return ResponseEntity.notFound().build();
@@ -91,18 +116,40 @@ public class DriverApiController {
             return ResponseEntity.status(403).body("Forbidden");
         }
 
-        Integer seatNumber = payload.get("seatNumber");
+        Integer seatNumber = (Integer) payload.get("seatNumber");
+        String paymentType = (String) payload.getOrDefault("paymentType", "CASH");
+        
         if (seatNumber == null || seatNumber < 1 || seatNumber > trip.getTotalSeats()) {
             return ResponseEntity.badRequest().body("So ghe khong hop le.");
         }
 
         List<Integer> locked = trip.getLockedSeats();
+        List<Integer> tPaid = trip.getTransferPaidSeats();
+        List<Integer> pPaid = trip.getOnlinePaidSeats();
+        List<Integer> pUnpaid = trip.getOnlineUnpaidSeats();
+
+        // Nếu đã ở trong bất kỳ danh sách nào -> Mở khóa (Xóa hết)
         if (locked.contains(seatNumber)) {
             locked.remove(seatNumber);
+        } else if (tPaid.contains(seatNumber)) {
+            tPaid.remove(seatNumber);
+        } else if (pPaid.contains(seatNumber)) {
+            pPaid.remove(seatNumber);
+        } else if (pUnpaid.contains(seatNumber)) {
+            pUnpaid.remove(seatNumber);
         } else {
-            locked.add(seatNumber);
+            // Khóa mới
+            if ("TRANSFER".equals(paymentType)) {
+                tPaid.add(seatNumber);
+            } else {
+                locked.add(seatNumber);
+            }
         }
+
         trip.setLockedSeats(locked);
+        trip.setTransferPaidSeats(tPaid);
+        trip.setOnlinePaidSeats(pPaid);
+        trip.setOnlineUnpaidSeats(pUnpaid);
         return ResponseEntity.ok(activeTripRepository.save(trip));
     }
 
@@ -130,15 +177,29 @@ public class DriverApiController {
         }
         User student = userOpt.get();
 
-        Map<String, Integer> pSeats = trip.getPassengerSeats();
+        Map<String, List<Integer>> pSeats = trip.getPassengerSeats();
         List<Integer> locked = trip.getLockedSeats();
+        List<Integer> checkedIn = trip.getCheckedInSeats();
 
         if (pSeats.containsKey(username)) {
+            List<Integer> userSeats = pSeats.get(username);
+            boolean newCheckIn = false;
+            for (Integer s : userSeats) {
+                if (!checkedIn.contains(s)) {
+                    checkedIn.add(s);
+                    newCheckIn = true;
+                }
+            }
+            if (!newCheckIn) {
+                return ResponseEntity.badRequest().body("Sinh vien nay da check-in tat ca cac ghe.");
+            }
+            trip.setCheckedInSeats(checkedIn);
+            ActiveTrip saved = activeTripRepository.save(trip);
             return ResponseEntity.ok(Map.of(
-                    "message", "Sinh vien da co ghe.",
+                    "message", "Xac nhan len xe thanh cong (Check-in).",
                     "studentName", student.getFullName(),
-                    "seatNumber", pSeats.get(username),
-                    "trip", trip));
+                    "seatNumber", userSeats.get(0),
+                    "trip", saved));
         }
 
         int assignedSeat = -1;
@@ -153,17 +214,45 @@ public class DriverApiController {
             return ResponseEntity.badRequest().body("Xe het ghe trong.");
         }
 
-        pSeats.put(username, assignedSeat);
+        List<Integer> userSeats = pSeats.getOrDefault(username, new ArrayList<>());
+        userSeats.add(assignedSeat);
+        pSeats.put(username, userSeats);
         locked.add(assignedSeat);
+        checkedIn.add(assignedSeat); // Tu dong check-in
+        
         trip.setPassengerSeats(pSeats);
         trip.setLockedSeats(locked);
+        trip.setCheckedInSeats(checkedIn);
         ActiveTrip saved = activeTripRepository.save(trip);
 
         return ResponseEntity.ok(Map.of(
-                "message", "Da xep ghe thanh cong.",
+                "message", "Da xep ghe va Check-in thanh cong.",
                 "studentName", student.getFullName(),
                 "seatNumber", assignedSeat,
                 "trip", saved));
+    }
+
+    @GetMapping("/{tripId}/passengers")
+    public ResponseEntity<?> getPassengers(@PathVariable String tripId) {
+        Optional<ActiveTrip> tripOpt = activeTripRepository.findById(tripId);
+        if (tripOpt.isEmpty()) return ResponseEntity.notFound().build();
+
+        ActiveTrip trip = tripOpt.get();
+        Map<String, List<Integer>> passengersMap = trip.getPassengerSeats();
+        List<Map<String, Object>> passengerList = new ArrayList<>();
+
+        if (passengersMap != null) {
+            passengersMap.forEach((username, seats) -> {
+                Optional<User> userOpt = userRepository.findByUsername(username);
+                Map<String, Object> pInfo = new HashMap<>();
+                pInfo.put("username", username);
+                pInfo.put("fullName", userOpt.map(User::getFullName).orElse("Unknown"));
+                pInfo.put("seats", seats);
+                passengerList.add(pInfo);
+            });
+        }
+
+        return ResponseEntity.ok(passengerList);
     }
 
     @GetMapping("/routes")

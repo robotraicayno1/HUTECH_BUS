@@ -35,11 +35,23 @@ public class ActiveTrip {
     /** Tổng số ghế trên xe (VD: 45) */
     private int totalSeats = 45;
 
-    /** Danh sách các số ghế đã bị khóa bởi lơ xe (khách vãng lai, ghế hỏng...) */
+    /** Danh sách các số ghế đã khóa Tiền mặt (bởi lơ xe) */
     private List<Integer> lockedSeats = new ArrayList<>();
 
-    /** Lưu ánh xạ username của sinh viên -> số ghế đã được cấp */
-    private Map<String, Integer> passengerSeats = new HashMap<>();
+    /** Danh sách các số ghế đã khóa Chuyển khoản (bởi lơ xe) */
+    private List<Integer> transferPaidSeats = new ArrayList<>();
+
+    /** Lưu ánh xạ username -> danh sách các số ghế đã đặt online */
+    private Map<String, List<Integer>> passengerSeats = new HashMap<>();
+
+    /** Danh sách các ghế đặt online bằng Tiền mặt (chưa trả tiền) */
+    private List<Integer> onlineUnpaidSeats = new ArrayList<>();
+
+    /** Danh sách các ghế đặt online đã trả tiền (VNPAY/Transfer) */
+    private List<Integer> onlinePaidSeats = new ArrayList<>();
+
+    /** Danh sách các ghế đã được tài xế xác nhận lên xe qua QR */
+    private List<Integer> checkedInSeats = new ArrayList<>();
 
     /** Thời điểm bắt đầu chuyến đi */
     private LocalDateTime startTime;

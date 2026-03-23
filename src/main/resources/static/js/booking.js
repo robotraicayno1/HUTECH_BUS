@@ -3,45 +3,85 @@
 const totalRows = 10;
 const seatPrice = 10000; // Giá tiền mỗi vé (VD: 10.000 VNĐ)
 
-// Lưu trữ các ghế đã chọn
-let selectedSeats = [];
+// --- 1.1 Khởi tạo dữ liệu từ Server ---
+let currentRouteId = new URLSearchParams(window.location.search).get('routeId') || '1'; 
+let activeTrip = null;
+let selectedSeats = []; // ĐÃ KHÔI PHỤC: Biến lưu trữ ghế đang chọn
 
 // Khởi tạo sơ đồ khi tải trang
 document.addEventListener('DOMContentLoaded', () => {
-    initBusLayout();
-    startCountdown(30 * 60); // Đếm ngược 30 phút (tính bằng giây)
+    fetchActiveTrip(); 
+    startCountdown(30 * 60); 
 });
 
-// Hàm tự động vẽ sơ đồ ghế ngồi
-function initBusLayout() {
+async function fetchActiveTrip() {
+    try {
+        const response = await fetch(`/api/bookings/active/${currentRouteId}`);
+        if (response.ok) {
+            activeTrip = await response.json();
+            document.getElementById('route-name-display').textContent = activeTrip.routeName;
+            initBusLayout(activeTrip);
+        } else {
+            // Nếu không có chuyến đang chạy, vẫn cho hiện sơ đồ trống để test hoặc thông báo
+            console.warn('Không tìm thấy chuyến xe đang chạy.');
+            initBusLayout(null);
+        }
+    } catch (error) {
+        console.error('Lỗi khi tải thông tin chuyến xe:', error);
+        initBusLayout(null);
+    }
+}
+
+// Hàm vẽ sơ đồ ghế có lối đi (Aisle) để khớp với CSS
+function initBusLayout(tripData) {
     const container = document.getElementById('seats-container');
     container.innerHTML = '';
     
-    // Giả lập một số ghế đã có người đặt
-    const fakeBookedSeats = ['1A', '1B', '4C', '4D', '8A'];
+    const bookedSeatsList = tripData ? tripData.lockedSeats : [];
+    const totalSeats = tripData ? tripData.totalSeats : 45;
+    
+    // Layout 5 cột: [Ghế] [Ghế] [Lối đi] [Ghế] [Ghế]
+    // Với 45 ghế, ta cần khoảng 11 hàng (11 * 4 = 44, hàng cuối 5 ghế)
+    // Để đơn giản và khớp CSS, ta chạy vòng lặp và chèn 'aisle' ở cột 3
+    let seatCounter = 1;
+    while (seatCounter <= totalSeats) {
+        for (let col = 1; col <= 5; col++) {
+            if (seatCounter > totalSeats) break;
 
-    const columns = ['A', 'B', 'aisle', 'C', 'D']; // Sơ đồ: 2 ghế - Lối đi - 2 ghế
-
-    for (let row = 1; row <= totalRows; row++) {
-        columns.forEach((col, index) => {
-            // Hàng cuối (hàng 10) sẽ bít lối đi thành 1 ghế (ví dụ ghế E)
-            if (row === 10 && col === 'aisle') {
-                createSeatElement(container, `${row}E`, fakeBookedSeats);
-                return;
-            }
-
-            // Với các hàng khác, nếu là 'aisle' thì render 1 khoảng trống
-            if (col === 'aisle') {
+            if (col === 3) {
+                // Chèn lối đi
                 const aisle = document.createElement('div');
                 aisle.className = 'aisle';
                 container.appendChild(aisle);
-                return;
+            } else {
+                createSeatElement(container, seatCounter, bookedSeatsList);
+                seatCounter++;
             }
-            
-            // Render ghế bình thường
-            const seatId = `${row}${col}`;
-            createSeatElement(container, seatId, fakeBookedSeats);
-        });
+        }
+    }
+}
+
+// Hàm tự động vẽ sơ đồ ghế ngồi dựa trên dữ liệu thật từ Server
+function initBusLayout(tripData) {
+    const container = document.getElementById('seats-container');
+    container.innerHTML = '';
+    
+    // Lấy TẤT CẢ các ghế đã bị chiếm dụng (Tiền mặt, Chuyển khoản, Online, Check-in)
+    let bookedSeatsList = [];
+    if (tripData) {
+        bookedSeatsList = [
+            ...(tripData.lockedSeats || []),
+            ...(tripData.transferPaidSeats || []),
+            ...(tripData.onlinePaidSeats || []),
+            ...(tripData.onlineUnpaidSeats || []),
+            ...(tripData.checkedInSeats || [])
+        ];
+    }
+
+    const totalSeats = tripData ? tripData.totalSeats : 45;
+
+    for (let i = 1; i <= totalSeats; i++) {
+        createSeatElement(container, i, bookedSeatsList);
     }
 }
 
@@ -144,28 +184,97 @@ function startCountdown(durationInSeconds) {
 
 // Gán sự kiện chuyển hướng qua trang Vé (Ticket/QR) sau khi bấm Thanh Toán
 // Gán sự kiện chuyển hướng qua trang Vé (Ticket/QR) sau khi bấm Thanh Toán
-document.getElementById('btn-checkout').addEventListener('click', () => {
-    // 1. Lưu tạm ghế vào localStorage để truyền sang màn hình vẽ mã QR
-    localStorage.setItem('hutech_booked_seats', JSON.stringify(selectedSeats));
-    
-    // 2. Mô phỏng lưu vé mới vào Cơ sở dữ liệu (Ở đây mượn LocalStorage)
-    // - Đọc dữ liệu vé ảo cũ ra
-    let myTickets = JSON.parse(localStorage.getItem('hutech_my_tickets') || '[]');
-    
-    // - Tạo thông tin vé chuẩn bị chèn
-    const newTicket = {
-        id: 'HT' + Math.floor(Math.random() * 1000000), // Random Mã vé
-        date: new Date().toLocaleDateString('vi-VN'),    // Ngày hiện hành
-        time: '07:30 AM',                                // Giờ mẫu
-        route: 'Khu A - Khu E',                          // Tuyến mẫu
-        seats: selectedSeats.join(', '),                 // Chuyển mảng ghế thành chuỗi chữ
-        total: (selectedSeats.length * seatPrice)        // Tính tiền
-    };
-    
-    // - Đẩy bản ghi mới vào danh sách và lưu ngược lại
-    myTickets.push(newTicket);
-    localStorage.setItem('hutech_my_tickets', JSON.stringify(myTickets));
+// Gán sự kiện thanh toán - Gửi dữ liệu về Server để xác nhận đặt chỗ
+document.getElementById('btn-checkout').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-checkout');
+    btn.disabled = true;
+    btn.textContent = 'Đang xử lý...';
 
-    // 3. Chuyển hướng tới trang chi tiết vé
-    window.location.href = '/ticket'; 
+    // Đọc phương thức thanh toán
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "TRANSFER";
+
+    const bookingData = {
+        routeId: currentRouteId,
+        seatNumbers: selectedSeats.map(id => parseInt(id)),
+        paymentType: paymentMethod
+    };
+
+    try {
+        const response = await fetch('/api/bookings/reserve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bookingData)
+        });
+
+        if (response.ok) {
+            // Nếu là Tiền mặt, kết thúc luôn
+            if (paymentMethod === 'CASH') {
+                localStorage.setItem('hutech_booked_seats', JSON.stringify(selectedSeats));
+                
+                // Lưu vào danh sách vé của tôi
+                const myTickets = JSON.parse(localStorage.getItem('hutech_my_tickets') || '[]');
+                const newTicket = {
+                    id: Math.floor(Math.random() * 1000000),
+                    route: document.getElementById('route-name-display').textContent,
+                    date: new Date().toLocaleDateString('vi-VN'),
+                    time: "07:30 AM", // Giả sử hoặc lấy từ UI nếu có
+                    seats: selectedSeats.sort().join(', '),
+                    total: selectedSeats.length * seatPrice,
+                    paymentMethod: 'CASH'
+                };
+                myTickets.push(newTicket);
+                localStorage.setItem('hutech_my_tickets', JSON.stringify(myTickets));
+
+                alert('✅ Đặt chỗ thành công! Vui lòng thanh toán tiền mặt khi lên xe.');
+                window.location.href = '/my-tickets';
+                return;
+            }
+
+            // Nếu là Chuyển khoản, gọi VNPAY
+            const paymentResponse = await fetch('/api/payment/create-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: selectedSeats.length * seatPrice,
+                    routeId: currentRouteId
+                })
+            });
+
+            if (paymentResponse.ok) {
+                const paymentData = await paymentResponse.json();
+                if (paymentData.code === "00") {
+                    localStorage.setItem('hutech_booked_seats', JSON.stringify(selectedSeats));
+                    window.location.href = paymentData.data; 
+                } else {
+                    alert('Lỗi tạo link thanh toán: ' + paymentData.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Tiến Hành Đặt Chỗ';
+                }
+            } else {
+                alert('Không thể kết nối dịch vụ thanh toán.');
+                btn.disabled = false;
+                btn.textContent = 'Tiến Hành Đặt Chỗ';
+            }
+        } else {
+            const errorMsg = await response.text();
+            alert('Lỗi đặt chỗ: ' + errorMsg);
+            btn.disabled = false;
+            btn.textContent = 'Thanh Toán Bằng QR';
+        }
+    } catch (error) {
+        console.error('Lỗi kết nối:', error);
+        alert('Không thể kết nối tới máy chủ.');
+        btn.disabled = false;
+    }
+});
+
+// Kiểm tra trạng thái thanh toán khi quay về từ VNPAY
+window.addEventListener('load', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('vnpay_status');
+    if (status === 'success') {
+        alert('🎉 Thanh toán thành công! Ghế của bạn đã được xác nhận.');
+    } else if (status === 'error') {
+        alert('❌ Thanh toán không thành công. Vui lòng thử lại.');
+    }
 });
