@@ -79,6 +79,27 @@
         </header>
 
         <main style="padding: 2.5rem 0;">
+            <div th:if="${activePass != null}" 
+                 style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 1.5rem; border-radius: 15px; color: white; margin-bottom: 2rem; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2); position: relative; overflow: hidden;">
+                <div style="position: absolute; right: -20px; top: -20px; font-size: 8rem; opacity: 0.1;">🎫</div>
+                <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; opacity: 0.9;">Thẻ Thành Viên Đang Hoạt Động</h3>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <h2 style="font-size: 1.8rem; font-weight: 800; margin-bottom: 0.2rem;" 
+                            th:text="${activePass.type == 'WEEK' ? 'THẺ TUẦN' : (activePass.type == 'MONTH' ? 'THẺ THÁNG' : 'THẺ NĂM')}">THẺ THÁNG</h2>
+                        <p style="font-size: 0.9rem; opacity: 0.8;">
+                            Hạn sử dụng: <b th:text="${#temporals.format(activePass.expiryDate, 'dd/MM/yyyy')}">31/12/2026</b>
+                        </p>
+                        <a href="/buy-pass" style="display: inline-block; margin-top: 10px; background: rgba(255,255,255,0.2); color: white; padding: 6px 15px; border-radius: 10px; text-decoration: none; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(255,255,255,0.3);">
+                            🔃 Gia hạn / Nâng cấp
+                        </a>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">
+                        ACTIVE ✅
+                    </div>
+                </div>
+            </div>
+
             <h2 style="color: var(--primary); font-size: 1.8rem;">Lịch Sử Chuyến Đi Của Bạn</h2>
             <p style="color: var(--text-muted); margin-top: 0.5rem;">Nhấn vào thẻ vé bất kỳ để xem lại Mã QR Check-in.</p>
             

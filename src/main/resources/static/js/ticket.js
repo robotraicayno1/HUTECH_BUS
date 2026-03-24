@@ -17,16 +17,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // (2) Hiển thị thông tin lên giao diện chữ
     document.getElementById('ticket-seats').textContent = bookedSeats.join(', ');
     
+    // Đọc Điểm đón từ localStorage
+    const pickupPoint = localStorage.getItem('hutech_current_pickup_point') || 'Chưa xác định';
+    const pickupPointEl = document.getElementById('ticket-pickup-point');
+    if (pickupPointEl) pickupPointEl.textContent = pickupPoint;
+    
     const today = new Date();
     const formattedDate = today.toLocaleDateString('vi-VN');
     document.getElementById('ticket-date').textContent = formattedDate;
 
     // (3) Thiết kế cấu trúc chuỗi Payload bảo mật mã hóa chứa trong QR
-    // Thông thường gồm: Mã Hóa Đơn + Mã Sinh Viên + Thời gian
-    // Ở demo này ta lấy timestamp và danh sách ghế để mix lại
+    const passEl = document.getElementById('pass-data');
+    const username = passEl ? passEl.getAttribute('data-username') : 'HUTECH-User';
+    const passType = passEl ? passEl.getAttribute('data-type') : 'NONE';
+    const passExpiry = passEl ? passEl.getAttribute('data-expiry') : '';
+
     const timestamp = Date.now();
-    const qrDataPayload = `HUTECHBUS|SV:NguyenVanA|GH_DAT:${bookedSeats.join(',')}|TX:${timestamp}`;
+    let qrDataPayload = `HUTECHBUS|SV:${username}|GH_DAT:${bookedSeats.join(',')}|TX:${timestamp}`;
     
+    if (passType !== 'NONE') {
+        qrDataPayload += `|PASS:${passType}|EXP:${passExpiry}`;
+    }
+
     console.log("Dữ liệu ẩn trong QR:", qrDataPayload);
 
     // (4) Render QR Code bằng thư viện qrcode.js vào thẻ div #qrcode
@@ -41,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         text: qrDataPayload,
         width: 160,       // Chiều rộng pixel
         height: 160,      // Chiều cao pixel
-        colorDark : "#000000",   // Màu QR (Đen để tăng độ tương phản camera dễ quyét)
+        colorDark : (passType !== 'NONE') ? "#10b981" : "#000000",   // Xanh nếu có thẻ, Đen nếu không
         colorLight : "#ffffff",  // Màu nền QR 
         correctLevel : QRCode.CorrectLevel.H // Mức độ chống lỗi H (Khôi phục được 30% nếu mờ)
     });

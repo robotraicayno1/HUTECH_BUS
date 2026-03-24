@@ -68,6 +68,7 @@
         <h2>HUTECH<span>BUS</span></h2>
         <a href="/dashboard" class="nav-link active">Dashboard</a>
         <a href="/my-tickets" class="nav-link">Vé của tôi (Mới)</a>
+        <a href="/buy-pass" class="nav-link">Mua Thẻ Vé Định Kỳ</a>
         <a href="/routes" class="nav-link">Tra cứu & Đặt chỗ</a>
         <a href="/history" class="nav-link">Lịch sử chuyến đi</a>
         <a href="/favorites" class="nav-link">Đã lưu / Yêu thích</a>
@@ -111,9 +112,19 @@
                 <h3>Số chuyến đi tháng này</h3>
                 <div class="value">12</div>
             </div>
-            <div class="stat-card">
-                <h3>Tuyến hay sử dụng</h3>
-                <div class="value">Tuyến 01</div>
+            <div class="stat-card" style="border-left-color: #10b981;">
+                <h3>Trạng thái Thẻ vé</h3>
+                <div class="value" th:if="${activePass != null}" th:text="${activePass.type == 'WEEK' ? 'Thẻ Tuần' : (activePass.type == 'MONTH' ? 'Thẻ Tháng' : 'Thẻ Năm')}">Thẻ Tháng</div>
+                <div class="value" th:if="${activePass == null}" style="color: #999; font-size: 1.2rem;">Chưa mua thẻ</div>
+                <p th:if="${activePass != null}" style="font-size: 0.75rem; color: #10b981; margin-top: 5px;">
+                    Hạn dùng: <span th:text="${#temporals.format(activePass.expiryDate, 'dd/MM/yyyy')}">31/12/2026</span>
+                </p>
+                <div th:if="${activePass != null}" style="margin-top: 10px;">
+                    <a href="/buy-pass" style="font-size: 0.75rem; color: var(--primary-color); text-decoration: none; font-weight: 600; background: rgba(255,107,0,0.1); padding: 5px 10px; border-radius: 5px;">
+                        🔃 Gia hạn / Nâng cấp
+                    </a>
+                </div>
+                <a th:if="${activePass == null}" href="/buy-pass" style="font-size: 0.75rem; color: var(--primary-color); text-decoration: none; font-weight: 600;">🛒 Mua ngay</a>
             </div>
             <div class="stat-card">
                 <h3>Điểm tích lũy (H-Point)</h3>
@@ -151,12 +162,20 @@
     <script th:inline="javascript">
         // Generate QR Code using username passed from controller
         const currentUsername = /*[[${username}]]*/ 'HT-User';
+        const activePassType = /*[[${activePass != null ? activePass.type : 'NONE'}]]*/ 'NONE';
+        const expiryDate = /*[[${activePass != null ? #temporals.format(activePass.expiryDate, 'yyyy-MM-dd') : ''}]]*/ '';
+
         if (currentUsername) {
+            let qrPayload = `HUTECHBUS|SV:${currentUsername}`;
+            if (activePassType !== 'NONE') {
+                qrPayload += `|PASS:${activePassType}|EXP:${expiryDate}`;
+            }
+
             new QRCode(document.getElementById("qrcode"), {
-                text: "HUTECHBUS-" + currentUsername,
+                text: qrPayload,
                 width: 160,
                 height: 160,
-                colorDark : "#003366",
+                colorDark : (activePassType !== 'NONE') ? "#10b981" : "#003366", // Xanh nếu có thẻ, Xanh đậm nếu không
                 colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.H
             });

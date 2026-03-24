@@ -6,7 +6,6 @@ import com.example.HUTECHBUS.model.User;
 import com.example.HUTECHBUS.repository.RouteRepository;
 import com.example.HUTECHBUS.repository.StopRepository;
 import com.example.HUTECHBUS.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,9 +27,6 @@ import java.util.Set;
  */
 @Configuration
 public class DataSeeder {
-
-    @Autowired
-    private org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
 
     @Bean
     CommandLineRunner initDatabase(UserRepository userRepository,

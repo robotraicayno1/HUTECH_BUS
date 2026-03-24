@@ -26,6 +26,12 @@
                 <span id="countdown-timer" class="timer">30:00</span>
             </div>
             <a href="/booking" class="btn-back">← Quay lại Đặt chỗ</a>
+            <!-- Hidden data for QR payload -->
+            <div id="pass-data" 
+                 th:data-username="${username}"
+                 th:data-type="${activePass != null ? activePass.type : 'NONE'}" 
+                 th:data-expiry="${activePass != null ? #temporals.format(activePass.expiryDate, 'yyyy-MM-dd') : ''}" 
+                 style="display: none;"></div>
         </header>
 
         <main class="ticket-wrapper">
@@ -34,7 +40,8 @@
                 <!-- Khu vực đầu vé -->
                 <div class="ticket-header">
                     <h2>VÉ LÊN XE (BOARDING PASS)</h2>
-                    <span class="status-badge success">Đã Thanh Toán</span>
+                    <span th:if="${activePass != null}" class="status-badge" style="background: #10b981; color: white;">Sử dụng Thẻ Vé</span>
+                    <span th:if="${activePass == null}" class="status-badge success">Đã Thanh Toán</span>
                 </div>
 
                 <!-- Thông tin hành trình -->
@@ -57,8 +64,8 @@
                             <strong>Nguyễn Văn A</strong>
                         </div>
                         <div class="detail-box text-right">
-                            <span class="label">Giờ Lên Xe</span>
-                            <strong>07:30 AM</strong>
+                            <span class="label">Điểm Đón</span>
+                            <strong id="ticket-pickup-point">...</strong>
                         </div>
                         <div class="detail-box">
                             <span class="label">Số Ghế</span>

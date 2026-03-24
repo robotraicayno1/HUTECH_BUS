@@ -34,4 +34,7 @@ public class User {
 
     /** Danh sách ID các tuyến xe yêu thích của người dùng */
     private Set<String> favoriteRouteIds = new HashSet<>();
+
+    /** ID của thẻ vé định kỳ đang hoạt động (nếu có) */
+    private String activePassId;
 }

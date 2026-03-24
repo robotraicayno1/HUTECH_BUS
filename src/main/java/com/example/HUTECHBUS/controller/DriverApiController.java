@@ -7,7 +7,9 @@ import com.example.HUTECHBUS.model.User;
 import com.example.HUTECHBUS.repository.ActiveTripMongoRepository;
 import com.example.HUTECHBUS.repository.RouteRepository;
 import com.example.HUTECHBUS.repository.TripHistoryRepository;
+import com.example.HUTECHBUS.repository.TicketPassRepository;
 import com.example.HUTECHBUS.repository.UserRepository;
+import com.example.HUTECHBUS.model.TicketPass;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +40,9 @@ public class DriverApiController {
 
     @Autowired
     private TripHistoryRepository tripHistoryRepository;
+
+    @Autowired
+    private TicketPassRepository ticketPassRepository;
 
     @GetMapping("/active")
     public ResponseEntity<?> getActiveTrip(Principal principal) {
@@ -195,10 +200,25 @@ public class DriverApiController {
             }
             trip.setCheckedInSeats(checkedIn);
             ActiveTrip saved = activeTripRepository.save(trip);
+
+            // Kiểm tra thẻ vé
+            String passStatus = "NONE";
+            String passType = "NONE";
+            if (student.getActivePassId() != null) {
+                Optional<TicketPass> passOpt = ticketPassRepository.findById(student.getActivePassId());
+                if (passOpt.isPresent()) {
+                    TicketPass pass = passOpt.get();
+                    passStatus = "ACTIVE".equals(pass.getStatus()) ? "VALID" : "EXPIRED";
+                    passType = pass.getType();
+                }
+            }
+
             return ResponseEntity.ok(Map.of(
                     "message", "Xac nhan len xe thanh cong (Check-in).",
                     "studentName", student.getFullName(),
                     "seatNumber", userSeats.get(0),
+                    "passStatus", passStatus,
+                    "passType", passType,
                     "trip", saved));
         }
 
@@ -225,10 +245,24 @@ public class DriverApiController {
         trip.setCheckedInSeats(checkedIn);
         ActiveTrip saved = activeTripRepository.save(trip);
 
+        // Kiểm tra thẻ vé
+        String passStatus = "NONE";
+        String passType = "NONE";
+        if (student.getActivePassId() != null) {
+            Optional<TicketPass> passOpt = ticketPassRepository.findById(student.getActivePassId());
+            if (passOpt.isPresent()) {
+                TicketPass pass = passOpt.get();
+                passStatus = "ACTIVE".equals(pass.getStatus()) ? "VALID" : "EXPIRED";
+                passType = pass.getType();
+            }
+        }
+
         return ResponseEntity.ok(Map.of(
                 "message", "Da xep ghe va Check-in thanh cong.",
                 "studentName", student.getFullName(),
                 "seatNumber", assignedSeat,
+                "passStatus", passStatus,
+                "passType", passType,
                 "trip", saved));
     }
 

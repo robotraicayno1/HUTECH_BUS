@@ -1,5 +1,7 @@
 package com.example.HUTECHBUS.controller;
-
+import com.example.HUTECHBUS.repository.TicketPassRepository;
+import com.example.HUTECHBUS.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Controller;
@@ -13,6 +15,12 @@ import java.security.Principal;
  */
 @Controller
 public class LoginController {
+    
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TicketPassRepository ticketPassRepository;
 
     /** Hiển thị trang đăng nhập */
     @GetMapping("/login")
@@ -49,6 +57,14 @@ public class LoginController {
         }
 
         model.addAttribute("username", authentication.getName());
+        userRepository.findByUsername(authentication.getName()).ifPresent(user -> {
+            model.addAttribute("user", user);
+            if (user.getActivePassId() != null) {
+                ticketPassRepository.findById(user.getActivePassId()).ifPresent(pass -> {
+                    model.addAttribute("activePass", pass);
+                });
+            }
+        });
         return "index";
     }
 

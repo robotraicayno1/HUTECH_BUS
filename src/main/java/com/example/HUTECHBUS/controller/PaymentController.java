@@ -1,8 +1,13 @@
 package com.example.HUTECHBUS.controller;
 
 import com.example.HUTECHBUS.config.VnPayConfig;
+import com.example.HUTECHBUS.model.TicketPass;
+import com.example.HUTECHBUS.model.User;
+import com.example.HUTECHBUS.repository.TicketPassRepository;
+import com.example.HUTECHBUS.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,11 +16,26 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TimeZone;
 
 @RestController
 @RequestMapping("/api/payment")
 public class PaymentController {
+
+    @Autowired
+    private TicketPassRepository ticketPassRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @PostMapping("/create-payment")
     public ResponseEntity<?> createPayment(HttpServletRequest req, @RequestBody Map<String, Object> payload) throws UnsupportedEncodingException {
@@ -81,13 +101,75 @@ public class PaymentController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Webhook/Callback từ VNPAY sau khi người dùng thanh toán xong.
+     * VNPAY sẽ gọi API này (hoặc người dùng bị redirect về đây).
+     */
     @GetMapping("/vnpay-payment-return")
     public void vnpayPaymentReturn(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String responseCode = request.getParameter("vnp_ResponseCode");
+        String orderInfo = request.getParameter("vnp_OrderInfo");
+
+        // Code "00" có nghĩa là thanh toán thành công
         if ("00".equals(responseCode)) {
-             response.sendRedirect("/dashboard?vnpay_status=success");
+            // Kiểm tra xem đây có phải là giao dịch mua Thẻ Vé Định Kỳ không (dựa vào tiền tố PASS:)
+            if (orderInfo != null && orderInfo.startsWith("PASS:")) {
+                // Xử lý logic mua/gia hạn thẻ vé
+                String[] parts = orderInfo.split(":");
+                // Cấu trúc dự kiến: PASS:{LoạiThẻ}:{Username}
+                if (parts.length >= 3) {
+                    String type = parts[1]; // WEEK, MONTH, YEAR
+                    String username = parts[2];
+                    
+                    Optional<User> userOpt = userRepository.findByUsername(username);
+                    if (userOpt.isPresent()) {
+                        User user = userOpt.get();
+                        
+                        LocalDateTime now = LocalDateTime.now();
+                        LocalDateTime startDate = now;
+
+                        // -- LOGIC GIA HẠN KHI THẺ CŨ CÒN HẠN (CHAINING) --
+                        // Nếu user đã có thẻ và thẻ đó còn hạn, thẻ mới sẽ được kích hoạt 
+                        // nối tiếp từ ngày thẻ cũ hết hạn để không bị mất ngày sử dụng.
+                        if (user.getActivePassId() != null) {
+                            Optional<TicketPass> oldPassOpt = ticketPassRepository.findById(user.getActivePassId());
+                            if (oldPassOpt.isPresent() && "ACTIVE".equals(oldPassOpt.get().getStatus())) {
+                                if (oldPassOpt.get().getExpiryDate().isAfter(now)) {
+                                    startDate = oldPassOpt.get().getExpiryDate();
+                                }
+                            }
+                        }
+
+                        // Tính toán thời gian hết hạn mới dựa trên điểm bắt đầu (startDate)
+                        LocalDateTime expiryDate;
+                        switch (type.toUpperCase()) {
+                            case "WEEK": expiryDate = startDate.plusDays(7); break;
+                            case "MONTH": expiryDate = startDate.plusMonths(1); break;
+                            case "YEAR": expiryDate = startDate.plusYears(1); break;
+                            default: expiryDate = startDate.plusMonths(1);
+                        }
+
+                        // Tạo thẻ mới trong CSDL
+                        TicketPass newPass = new TicketPass();
+                        newPass.setUserId(username);
+                        newPass.setType(type.toUpperCase());
+                        newPass.setPurchaseDate(now);
+                        newPass.setExpiryDate(expiryDate);
+                        newPass.setStatus("ACTIVE"); // Đánh dấu thẻ là đang hoạt động
+
+                        TicketPass savedPass = ticketPassRepository.save(newPass);
+                        
+                        // Cập nhật lại User để tham chiếu đến thẻ mới nhất
+                        user.setActivePassId(savedPass.getId());
+                        userRepository.save(user);
+                    }
+                }
+            }
+            // Chuyển hướng người dùng về Dashboard kèm cờ thành công
+            response.sendRedirect("/dashboard?vnpay_status=success");
         } else {
-             response.sendRedirect("/dashboard?vnpay_status=error");
+            // Thanh toán thất bại hoặc bị hủy
+            response.sendRedirect("/dashboard?vnpay_status=error");
         }
     }
 }

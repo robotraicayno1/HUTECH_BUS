@@ -6,13 +6,31 @@ const seatPrice = 10000; // Giá tiền mỗi vé (VD: 10.000 VNĐ)
 // --- 1.1 Khởi tạo dữ liệu từ Server ---
 let currentRouteId = new URLSearchParams(window.location.search).get('routeId') || '1'; 
 let activeTrip = null;
-let selectedSeats = []; // ĐÃ KHÔI PHỤC: Biến lưu trữ ghế đang chọn
+let selectedSeats = []; 
+let userPass = null; // Lưu trữ thông tin thẻ vé của user
 
 // Khởi tạo sơ đồ khi tải trang
 document.addEventListener('DOMContentLoaded', () => {
+    checkUserPass(); // Kiểm tra thẻ vé trước
     fetchActiveTrip(); 
+    fetchRouteStops(); // Lấy danh sách trạm dừng
     startCountdown(30 * 60); 
 });
+
+async function checkUserPass() {
+    try {
+        const response = await fetch('/api/users/me/active-pass');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.hasActivePass) {
+                userPass = data.pass;
+                console.log('User has active pass:', userPass);
+            }
+        }
+    } catch (error) {
+        console.error('Lỗi khi kiểm tra thẻ vé:', error);
+    }
+}
 
 async function fetchActiveTrip() {
     try {
@@ -29,6 +47,30 @@ async function fetchActiveTrip() {
     } catch (error) {
         console.error('Lỗi khi tải thông tin chuyến xe:', error);
         initBusLayout(null);
+    }
+}
+
+async function fetchRouteStops() {
+    try {
+        const response = await fetch(`/api/routes/${currentRouteId}`);
+        if (response.ok) {
+            const data = await response.json();
+            const select = document.getElementById('pickup-point-select');
+            select.innerHTML = '';
+            
+            if (data.stops && data.stops.length > 0) {
+                data.stops.forEach(stop => {
+                    const option = document.createElement('option');
+                    option.value = stop.name;
+                    option.textContent = stop.name;
+                    select.appendChild(option);
+                });
+            } else {
+                select.innerHTML = '<option value="Chưa xác định">Chưa xác định</option>';
+            }
+        }
+    } catch (error) {
+        console.error('Lỗi khi tải danh sách trạm đón:', error);
     }
 }
 
@@ -112,7 +154,16 @@ function updateSummary() {
         selectedListEl.textContent = selectedSeats.join(', ');
         
         // Cập nhật giá tiền
-        const total = selectedSeats.length * seatPrice;
+        let total = selectedSeats.length * seatPrice;
+        
+        // Nếu có thẻ vé, đổi nút và giá
+        if (userPass) {
+            total = 0; // Miễn phí từng chuyến
+            btnCheckout.textContent = 'Xác nhận bằng ' + (userPass.type === 'WEEK' ? 'Thẻ Tuần' : userPass.type === 'MONTH' ? 'Thẻ Tháng' : 'Thẻ Năm');
+        } else {
+            btnCheckout.textContent = 'Tiến Hành Đặt Chỗ';
+        }
+
         totalPriceEl.textContent = total.toLocaleString('vi-VN') + ' VNĐ';
         
         // Kích hoạt nút thanh toán
@@ -163,11 +214,13 @@ document.getElementById('btn-checkout').addEventListener('click', async () => {
 
     // Đọc phương thức thanh toán
     const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "TRANSFER";
+    const pickupPoint = document.getElementById('pickup-point-select').value;
 
     const bookingData = {
         routeId: currentRouteId,
         seatNumbers: selectedSeats.map(id => parseInt(id)),
-        paymentType: paymentMethod
+        paymentType: userPass ? "PASS" : paymentMethod,
+        pickupPoint: pickupPoint
     };
 
     try {
@@ -178,25 +231,12 @@ document.getElementById('btn-checkout').addEventListener('click', async () => {
         });
 
         if (response.ok) {
-            // Nếu là Tiền mặt, kết thúc luôn
-            if (paymentMethod === 'CASH') {
+            // Nếu dùng thẻ vé hoặc Tiền mặt, kết thúc luôn
+            if (userPass || paymentMethod === 'CASH') {
                 localStorage.setItem('hutech_booked_seats', JSON.stringify(selectedSeats));
-                
-                // Lưu vào danh sách vé của tôi
-                const myTickets = JSON.parse(localStorage.getItem('hutech_my_tickets') || '[]');
-                const newTicket = {
-                    id: Math.floor(Math.random() * 1000000),
-                    route: document.getElementById('route-name-display').textContent,
-                    date: new Date().toLocaleDateString('vi-VN'),
-                    time: "07:30 AM", // Giả sử hoặc lấy từ UI nếu có
-                    seats: selectedSeats.sort().join(', '),
-                    total: selectedSeats.length * seatPrice,
-                    paymentMethod: 'CASH'
-                };
-                myTickets.push(newTicket);
-                localStorage.setItem('hutech_my_tickets', JSON.stringify(myTickets));
+                localStorage.setItem('hutech_current_pickup_point', pickupPoint);
 
-                alert('✅ Đặt chỗ thành công! Vui lòng thanh toán tiền mặt khi lên xe.');
+                alert(userPass ? '✅ Xác nhận ghế thành công bằng Thẻ Vé!' : '✅ Đặt chỗ thành công! Vui lòng thanh toán tiền mặt khi lên xe.');
                 window.location.href = '/my-tickets';
                 return;
             }
@@ -215,6 +255,7 @@ document.getElementById('btn-checkout').addEventListener('click', async () => {
                 const paymentData = await paymentResponse.json();
                 if (paymentData.code === "00") {
                     localStorage.setItem('hutech_booked_seats', JSON.stringify(selectedSeats));
+                    localStorage.setItem('hutech_current_pickup_point', pickupPoint);
                     window.location.href = paymentData.data; 
                 } else {
                     alert('Lỗi tạo link thanh toán: ' + paymentData.message);

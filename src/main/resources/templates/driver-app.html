@@ -672,7 +672,15 @@
                 
                 if (res.ok) {
                     const data = await res.json();
-                    alert(`✅ THÀNH CÔNG\n${data.studentName} đã được cấp / báo ghế số ${data.seatNumber}`);
+                    let passMsg = "";
+                    if (data.passStatus === "VALID") {
+                        passMsg = `\n✅ THẺ ${data.passType} HỢP LỆ - MỜI LÊN XE`;
+                    } else if (data.passStatus === "EXPIRED") {
+                        passMsg = `\n❌ THẺ HẾT HẠN - VUI LÒNG TRẢ TIỀN MẶT`;
+                    } else {
+                        passMsg = `\nℹ️ SINH VIÊN KHÔNG DÙNG THẺ`;
+                    }
+                    alert(`THÔNG BÁO QUÉT QR\n------------------\nHành khách: ${data.studentName}\nGhế số: ${data.seatNumber}${passMsg}`);
                     // Re-render trip
                     renderActiveTrip(data.trip);
                 } else {
