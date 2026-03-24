@@ -1,5 +1,9 @@
 package com.example.HUTECHBUS.controller;
-
+import com.example.HUTECHBUS.repository.TicketPassRepository;
+import com.example.HUTECHBUS.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 @Controller
 public class LoginController {
+    
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TicketPassRepository ticketPassRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -36,13 +46,41 @@ public class LoginController {
      * Truyền thông tin người dùng vào model để hiển thị.
      */
     @GetMapping("/dashboard")
+<<<<<<< HEAD
     public String dashboard(Model model, Principal principal) {
         if (principal != null) {
             model.addAttribute("username", principal.getName());
             userRepository.findByUsername(principal.getName()).ifPresent(user -> {
                 model.addAttribute("user", user);
             });
+=======
+    public String dashboard(Model model, Authentication authentication) {
+        if (authentication == null) return "redirect:/login";
+
+        // Kiểm tra role MANAGER để chuyển hướng sang trang tài xế
+        boolean isManager = authentication.getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_MANAGER"));
+        if (isManager) {
+            return "redirect:/driver/app";
+>>>>>>> MINHTAI
         }
+
+        // Kiểm tra role ADMIN để chuyển hướng sang trang admin
+        boolean isAdmin = authentication.getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        if (isAdmin) {
+            return "redirect:/admin";
+        }
+
+        model.addAttribute("username", authentication.getName());
+        userRepository.findByUsername(authentication.getName()).ifPresent(user -> {
+            model.addAttribute("user", user);
+            if (user.getActivePassId() != null) {
+                ticketPassRepository.findById(user.getActivePassId()).ifPresent(pass -> {
+                    model.addAttribute("activePass", pass);
+                });
+            }
+        });
         return "index";
     }
 

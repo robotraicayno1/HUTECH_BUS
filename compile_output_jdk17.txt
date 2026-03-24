@@ -1,0 +1,11 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.example:HUTECHBUS >------------------------
+[INFO] Building  0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.4.1:clean (default-clean) @ HUTECHBUS ---
+[INFO] Deleting C:\Users\coem3\Desktop\HUTECHBUS\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ HUTECHBUS ---

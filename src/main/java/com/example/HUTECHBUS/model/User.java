@@ -35,9 +35,14 @@ public class User {
     /** Danh sách ID các tuyến xe yêu thích của người dùng */
     private Set<String> favoriteRouteIds = new HashSet<>();
 
+<<<<<<< HEAD
     /** Điểm H-Point tích lũy của người dùng */
     private int hPoints = 0;
 
     /** Danh sách các mã khuyến mãi mà người dùng đã nhập thành công */
     private Set<String> usedPromoCodes = new HashSet<>();
+=======
+    /** ID của thẻ vé định kỳ đang hoạt động (nếu có) */
+    private String activePassId;
+>>>>>>> MINHTAI
 }

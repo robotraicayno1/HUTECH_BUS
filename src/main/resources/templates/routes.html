@@ -80,9 +80,22 @@
         <h2>HUTECH<span>BUS</span></h2>
         <a href="/dashboard" class="nav-link">Dashboard</a>
         <a href="/routes" class="nav-link active">Tra cứu lộ trình</a>
+        <a href="/my-tickets" class="nav-link" style="color: #f59e0b; font-weight: 500;">🎟️ Vé của tôi</a>
         <a href="/history" class="nav-link">Lịch sử chuyến đi</a>
         <a href="/favorites" class="nav-link">Đã lưu / Yêu thích</a>
         <a href="/notifications" class="nav-link">Thông báo</a>
+        <hr style="border-top: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
+        <div style="font-size: 0.75rem; letter-spacing: 1px; color: rgba(255,255,255,0.5); font-weight: bold; margin-bottom: 5px; padding-left: 18px;">QUẢN TRỊ ADMIN</div>
+        
+        <a href="javascript:void(0)" onclick="toggleAdminMenu()" class="nav-link" style="justify-content: space-between;">
+            Tính năng quản lý <span id="adminToggleIcon">▼</span>
+        </a>
+        <div id="adminMenu" style="display: none; padding-left: 15px; flex-direction: column;">
+            <a href="/admin/dashboard" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Tổng quan</a>
+            <a href="/admin/vehicles" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Quản lý Xe Bus</a>
+            <a href="/admin/routes" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Quản lý Tuyến</a>
+            <a href="/admin/stops" class="nav-link" style="padding: 10px 18px; font-size: 0.9rem; margin-bottom: 4px;">Quản lý Trạm dừng</a>
+        </div>
     </div>
 
     <div class="main-content">
@@ -178,24 +191,19 @@
             }
         }
         async function recordTrip(id) {
+            // DUCTAI: Record trip and give points
             try {
                 const res = await fetch(`/api/trips/record/${id}`, { method: 'POST' });
                 const data = await res.json();
-                if (data.success) {
-                    if (data.earnedPoints) {
-                        Swal.fire({
-                            title: 'Đặt vé thành công!',
-                            html: `Chuyến đi của bạn đã được ghi nhận.<br><br>🎉 Bạn được cộng thêm <b style="color:var(--primary-color); font-size:1.1rem;">+${data.earnedPoints} H-Point</b>!<br>Điểm tích lũy hiện tại: <b>${data.totalPoints} Point</b>`,
-                            icon: 'success',
-                            confirmButtonText: 'Tuyệt vời',
-                            confirmButtonColor: '#003366',
-                            backdrop: `rgba(0,0,123,0.4)`
-                        });
-                    } else {
-                        Swal.fire('Thành công', 'Đã đặt vé chuyến đi!', 'success');
-                    }
+                if (data.success && data.earnedPoints) {
+                    console.log(`Earned ${data.earnedPoints} points!`);
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error("Lỗi ghi nhận chuyến đi:", err); 
+            }
+            
+            // MINHTAI: Then redirect to booking
+            window.location.href = `/booking?routeId=${id}`;
         }
 
         async function toggleFavorite(id, el) {
@@ -217,6 +225,19 @@
                     }
                 }
             } catch (err) { console.error(err); }
+        }
+
+        // Dropdown toggle logic
+        function toggleAdminMenu() {
+            var menu = document.getElementById('adminMenu');
+            var icon = document.getElementById('adminToggleIcon');
+            if (menu.style.display === 'none') {
+                menu.style.display = 'flex';
+                icon.innerText = '▲';
+            } else {
+                menu.style.display = 'none';
+                icon.innerText = '▼';
+            }
         }
     </script>
 </body>

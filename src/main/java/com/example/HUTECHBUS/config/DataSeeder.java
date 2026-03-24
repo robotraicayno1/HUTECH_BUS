@@ -6,9 +6,12 @@ import com.example.HUTECHBUS.model.User;
 import com.example.HUTECHBUS.repository.RouteRepository;
 import com.example.HUTECHBUS.repository.StopRepository;
 import com.example.HUTECHBUS.repository.UserRepository;
+<<<<<<< HEAD
 import com.example.HUTECHBUS.repository.VoucherRepository;
 import com.example.HUTECHBUS.model.Voucher;
 import org.springframework.beans.factory.annotation.Autowired;
+=======
+>>>>>>> MINHTAI
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,9 +33,6 @@ import java.util.Set;
  */
 @Configuration
 public class DataSeeder {
-
-    @Autowired
-    private org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
 
     @Bean
     CommandLineRunner initDatabase(UserRepository userRepository,
@@ -213,7 +213,7 @@ public class DataSeeder {
             // 10 Sinh viên mẫu (211101 → 211110, mật khẩu: 123456)
             for (int i = 1; i <= 10; i++) {
                 User student = new User();
-                student.setUsername("21110" + i);
+                student.setUsername(String.format("2111%02d", i));
                 student.setPassword(passwordEncoder.encode("123456"));
                 student.setFullName("Sinh viên HUTECH " + i);
                 student.setRoles(Set.of("STUDENT"));

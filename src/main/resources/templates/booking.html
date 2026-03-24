@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECH BUS - Đặt chỗ & Thanh toán</title>
+    <!-- Gắn file CSS giao diện -->
+    <link rel="stylesheet" th:href="@{/css/booking.css}">
+    <!-- Google Fonts cho Typography hiện đại -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header với hiệu ứng Glassmorphism -->
+        <header class="glass-header">
+            <div class="logo">
+                <h1>HUTECH<span>BUS</span></h1>
+            </div>
+            <!-- Bộ đếm ngược thời gian giữ chỗ -->
+            <div class="countdown-widget">
+                <span class="label">Thời gian giữ chỗ:</span>
+                <span id="countdown-timer" class="timer">30:00</span>
+            </div>
+        </header>
+
+        <main class="booking-content">
+            <!-- Khu vực sơ đồ xe buýt -->
+            <section class="bus-layout glass-card">
+                <div class="steering-wheel">🚍 Đầu xe</div>
+                
+                <div class="seats-container" id="seats-container">
+                    <!-- Javascript sẽ render ghế tại đây -->
+                </div>
+                
+                <div class="seat-legend">
+                    <div class="legend-item">
+                        <div class="seat-badge available"></div> Trống
+                    </div>
+                    <div class="legend-item">
+                        <div class="seat-badge selected"></div> Đang chọn
+                    </div>
+                    <div class="legend-item">
+                        <div class="seat-badge booked"></div> Đã đặt
+                    </div>
+                </div>
+            </section>
+
+            <!-- Khu vực thông tin thanh toán -->
+            <aside class="booking-summary glass-card">
+                <h2>Chi Tiết Đặt Chỗ</h2>
+                <div class="summary-details">
+                    <div class="detail-row">
+                        <span>Tuyến:</span>
+                        <strong id="route-name-display">Khu A - Khu E</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Điểm đón:</span>
+                        <select id="pickup-point-select" style="max-width: 160px; font-family: inherit; font-size: 0.85rem; padding: 4px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: inherit; outline: none;"></select>
+                    </div>
+                    <div class="detail-row">
+                        <span>Giờ chạy:</span>
+                        <strong>07:30 AM</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Ghế đã chọn:</span>
+                        <strong id="selected-seats-list">Chưa chọn</strong>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="detail-row">
+                        <span>Thanh toán:</span>
+                        <div class="payment-methods" style="display: flex; gap: 10px; margin-top: 5px;">
+                            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="radio" name="paymentMethod" value="TRANSFER" checked> Chuyển khoản
+                            </label>
+                            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                <input type="radio" name="paymentMethod" value="CASH"> Tiền mặt
+                            </label>
+                        </div>
+                        <p style="font-size: 0.75rem; color: #888; margin-top: 8px;">
+                            💡 Bạn có thẻ tháng? <a href="/buy-pass" style="color: var(--primary); text-decoration: none; font-weight: 600;">Mua ngay tại đây</a> để được miễn phí 0đ.
+                        </p>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="detail-row total">
+                        <span>Tổng tiền:</span>
+                        <strong id="total-price">0 VNĐ</strong>
+                    </div>
+                </div>
+                <button class="btn-checkout" id="btn-checkout" disabled>Tiến Hành Đặt Chỗ</button>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Tích hợp logic xử lý JS -->
+    <script th:src="@{/js/booking.js}"></script>
+</body>
+</html>
