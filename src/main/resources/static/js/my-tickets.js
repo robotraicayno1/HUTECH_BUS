@@ -56,12 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="ticket-icon">🎟️</div>
                     `;
                     
-                    // (4) Ràng buộc sự kiện Click cho phép mở lại mã QR của vé này
                     ticketCard.addEventListener('click', () => {
                         // Cập nhật lại danh sách "ghế đang xem" (hutech_booked_seats) 
                         const seatsArray = ticket.seats.split(', ');
                         localStorage.setItem('hutech_booked_seats', JSON.stringify(seatsArray));
                         localStorage.setItem('hutech_current_ticket_status', ticket.status || 'success');
+                        localStorage.setItem('hutech_current_ticket_id', ticket.id);
                         
                         // Chuyển hướng sang trang chi tiết vé QR
                         window.location.href = '/ticket';

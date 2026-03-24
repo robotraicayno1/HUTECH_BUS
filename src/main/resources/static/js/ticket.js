@@ -21,36 +21,75 @@ document.addEventListener('DOMContentLoaded', () => {
     const formattedDate = today.toLocaleDateString('vi-VN');
     document.getElementById('ticket-date').textContent = formattedDate;
 
-    // (3) Thiết kế cấu trúc chuỗi Payload bảo mật mã hóa chứa trong QR
-    // Thông thường gồm: Mã Hóa Đơn + Mã Sinh Viên + Thời gian
-    // Ở demo này ta lấy timestamp và danh sách ghế để mix lại
-    const timestamp = Date.now();
-    const qrDataPayload = `HUTECHBUS|SV:NguyenVanA|GH_DAT:${bookedSeats.join(',')}|TX:${timestamp}`;
-    
-    console.log("Dữ liệu ẩn trong QR:", qrDataPayload);
+    // Lấy thông tin vé mới nhất hoặc tương ứng từ API để lấy Username và TicketId
+    fetch('/api/tickets/my')
+        .then(r => r.json())
+        .then(async (tickets) => {
+            const targetId = localStorage.getItem('hutech_current_ticket_id');
+            let matchedTicket;
+            if (targetId) {
+                matchedTicket = tickets.find(t => t.id === targetId);
+            }
+            if (!matchedTicket) {
+                matchedTicket = tickets.find(t => t.seats === bookedSeats.join(', '));
+            }
+            if (!matchedTicket && tickets.length > 0) matchedTicket = tickets[tickets.length - 1];
+            
+            const username = matchedTicket ? matchedTicket.username : 'Unknown';
+            const routeId = matchedTicket ? matchedTicket.route : 'Khu A - Khu E';
+            const ticketId = matchedTicket ? matchedTicket.id : 'N/A';
+            
+            // Nếu đây là Thẻ Định Kỳ, ghi đè Date hiển thị thành Hạn Sử Dụng
+            if (matchedTicket && matchedTicket.type === 'PASS') {
+                document.getElementById('ticket-date').textContent = 'HSD: ' + matchedTicket.expiryDate;
+                // Ẩn bộ đếm thời gian 30 phút vì thẻ định kỳ không hết hạn theo phút
+                const countdownWidget = document.querySelector('.countdown-widget');
+                if (countdownWidget) countdownWidget.style.display = 'none';
+                window.isPassTicket = true;
+            }
+            
+            let passStatus = 'NONE';
+            try {
+                const passRes = await fetch('/api/passes/my');
+                const passData = await passRes.json();
+                if (passData && passData.status) {
+                    passStatus = passData.status;
+                }
+            } catch(e){}
 
-    // (4) Render QR Code bằng thư viện qrcode.js vào thẻ div #qrcode
-    // Tham khảo API: https://davidshimjs.github.io/qrcodejs/
-    const qrElement = document.getElementById("qrcode");
-    
-    // Xóa nội dung cũ trước khi sinh mới (nếu có)
-    qrElement.innerHTML = '';
-    
-    // Khởi tạo Object
-    new QRCode(qrElement, {
-        text: qrDataPayload,
-        width: 160,       // Chiều rộng pixel
-        height: 160,      // Chiều cao pixel
-        colorDark : "#000000",   // Màu QR (Đen để tăng độ tương phản camera dễ quyét)
-        colorLight : "#ffffff",  // Màu nền QR 
-        correctLevel : QRCode.CorrectLevel.H // Mức độ chống lỗi H (Khôi phục được 30% nếu mờ)
-    });
+            // Rút gọn Mã QR chỉ chứa thông tin thiết yếu để tránh lỗi Tràn bộ nhớ chuỗi (Overflow) của qrcode.js
+            // Backend DriverApiController chỉ cần TICKET_ID để quét
+            const qrDataPayload = `TICKET_ID:${ticketId}|TYPE:${matchedTicket ? matchedTicket.type : 'TICKET'}`;
+            console.log("Dữ liệu ẩn trong QR:", qrDataPayload);
 
-    // (5) Logic đếm ngược 30 phút cho trang vé
+            // Render QR Code
+            const qrElement = document.getElementById("qrcode");
+            qrElement.innerHTML = '';
+            new QRCode(qrElement, {
+                text: qrDataPayload,
+                width: 160,
+                height: 160,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.L
+            });
+        }).catch(err => {
+            console.error("Lỗi tạo QR:", err);
+            const qrElement = document.getElementById("qrcode");
+            qrElement.innerHTML = '<p style="color:red; font-size:12px;">Lỗi tạo QR: <br/>' + err.toString() + 
+                                  '<br/>Payload size: ' + (typeof qrDataPayload !== 'undefined' ? qrDataPayload.length : 'N/A') +
+                                  '<br/>' + (typeof qrDataPayload !== 'undefined' ? qrDataPayload.substring(0, 100) + '...' : '') + '</p>';
+        });
+
+    // (5) Logic đếm ngược 30 phút cho trang vé (chỉ chạy cho vé thường)
     let timer = 30 * 60;
     const display = document.getElementById('countdown-timer');
     if (display) {
         const countdownInterval = setInterval(function () {
+            if (window.isPassTicket) {
+                clearInterval(countdownInterval);
+                return;
+            }
             let minutes = parseInt(timer / 60, 10);
             let seconds = parseInt(timer % 60, 10);
             

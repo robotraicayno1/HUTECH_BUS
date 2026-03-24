@@ -1,0 +1,4 @@
+2026-03-24T17:50:13.196+07:00  INFO 31616 --- [HUTECHBUS] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-03-24T17:50:13.196+07:00  INFO 31616 --- [HUTECHBUS] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-24T17:50:14.979+07:00  WARN 31616 --- [HUTECHBUS] [  restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2026-03-24T17:50:15.001+07:00 ERROR 31616 --- [HUTECHBUS] [  restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 

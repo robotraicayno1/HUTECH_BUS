@@ -2,6 +2,7 @@ package com.example.HUTECHBUS.controller;
 
 import com.example.HUTECHBUS.model.Ticket;
 import com.example.HUTECHBUS.repository.TicketRepository;
+import com.example.HUTECHBUS.repository.TicketPassRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +11,7 @@ import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Date;
 
 @RestController
 @RequestMapping("/api/tickets")
@@ -17,6 +19,9 @@ public class TicketRestController {
 
     @Autowired
     private TicketRepository ticketRepository;
+
+    @Autowired
+    private TicketPassRepository ticketPassRepository;
 
     @PostMapping
     public ResponseEntity<?> createTicket(@RequestBody Ticket ticket, Principal principal) {
@@ -31,6 +36,20 @@ public class TicketRestController {
         }
         if(ticket.getStatus() == null) {
             ticket.setStatus("pending");
+        }
+        
+        Date now = new Date();
+        List<com.example.HUTECHBUS.model.TicketPass> passes = ticketPassRepository.findByUsernameAndStatus(username, "ACTIVE");
+        boolean hasActivePass = passes.stream()
+            .anyMatch(p -> p.getStartDate() != null && p.getExpiryDate() != null 
+                        && p.getStartDate().before(now) && p.getExpiryDate().after(now)
+                        && p.getRoute() != null && p.getRoute().equals(ticket.getRoute()));
+        
+        if (hasActivePass) {
+            ticket.setTotal(0.0);
+            // Optional: Auto-approve pass tickets immediately instead of pending payment 
+            // since they don't need to pay.
+            ticket.setStatus("success");
         }
         
         Ticket savedTicket = ticketRepository.save(ticket);
@@ -89,8 +108,38 @@ public class TicketRestController {
             return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
         }
         String username = principal.getName();
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        
         List<Ticket> tickets = ticketRepository.findByUsername(username);
-        return ResponseEntity.ok(tickets);
+        for (Ticket t : tickets) {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", t.getId());
+            map.put("route", t.getRoute());
+            map.put("date", t.getDate());
+            map.put("time", t.getTime());
+            map.put("seats", t.getSeats());
+            map.put("total", t.getTotal());
+            map.put("status", t.getStatus());
+            map.put("type", "TICKET");
+            result.add(map);
+        }
+        
+        List<com.example.HUTECHBUS.model.TicketPass> passes = ticketPassRepository.findByUsername(username);
+        for (com.example.HUTECHBUS.model.TicketPass p : passes) {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", p.getId());
+            map.put("route", p.getRoute());
+            map.put("date", new java.text.SimpleDateFormat("dd/MM/yyyy").format(p.getPurchaseDate()));
+            map.put("time", "HSD: " + new java.text.SimpleDateFormat("dd/MM/yyyy").format(p.getExpiryDate()));
+            map.put("seats", "Thẻ " + p.getType());
+            map.put("total", "DAY".equals(p.getType()) ? 10000 : "MONTH".equals(p.getType()) ? 120000 : 950000);
+            map.put("status", "PENDING".equals(p.getStatus()) ? "pending" : "EXPIRED".equals(p.getStatus()) || "FAILED".equals(p.getStatus()) ? "failed" : "success");
+            map.put("type", "PASS");
+            map.put("expiryDate", new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(p.getExpiryDate()));
+            result.add(map);
+        }
+        
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/pending")
@@ -98,8 +147,40 @@ public class TicketRestController {
         if (principal == null || !principal.getName().toLowerCase().contains("admin")) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
+        
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        
         List<Ticket> tickets = ticketRepository.findByStatus("pending");
-        return ResponseEntity.ok(tickets);
+        for (Ticket t : tickets) {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", t.getId());
+            map.put("username", t.getUsername());
+            map.put("route", t.getRoute());
+            map.put("date", t.getDate());
+            map.put("time", t.getTime());
+            map.put("seats", t.getSeats());
+            map.put("total", t.getTotal());
+            map.put("status", t.getStatus());
+            map.put("type", "TICKET");
+            result.add(map);
+        }
+        
+        List<com.example.HUTECHBUS.model.TicketPass> passes = ticketPassRepository.findByStatus("PENDING");
+        for (com.example.HUTECHBUS.model.TicketPass p : passes) {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", p.getId());
+            map.put("username", p.getUsername());
+            map.put("route", p.getRoute());
+            map.put("date", new java.text.SimpleDateFormat("dd/MM/yyyy").format(p.getPurchaseDate()));
+            map.put("time", "");
+            map.put("seats", "Thẻ " + p.getType());
+            map.put("total", "DAY".equals(p.getType()) ? 10000 : "MONTH".equals(p.getType()) ? 120000 : 950000);
+            map.put("status", p.getStatus().toLowerCase()); // pending
+            map.put("type", "PASS");
+            result.add(map);
+        }
+        
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/history")
@@ -107,11 +188,44 @@ public class TicketRestController {
         if (principal == null || !principal.getName().toLowerCase().contains("admin")) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
+        
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        
         List<Ticket> allTickets = ticketRepository.findAll();
-        List<Ticket> history = allTickets.stream()
-            .filter(t -> !t.getStatus().equals("pending"))
-            .collect(java.util.stream.Collectors.toList());
-        return ResponseEntity.ok(history);
+        for (Ticket t : allTickets) {
+            if (!"pending".equals(t.getStatus())) {
+                Map<String, Object> map = new java.util.HashMap<>();
+                map.put("id", t.getId());
+                map.put("username", t.getUsername());
+                map.put("route", t.getRoute());
+                map.put("date", t.getDate());
+                map.put("time", t.getTime());
+                map.put("seats", t.getSeats());
+                map.put("total", t.getTotal());
+                map.put("status", t.getStatus());
+                map.put("type", "TICKET");
+                result.add(map);
+            }
+        }
+        
+        List<com.example.HUTECHBUS.model.TicketPass> allPasses = ticketPassRepository.findAll();
+        for (com.example.HUTECHBUS.model.TicketPass p : allPasses) {
+            if (!"PENDING".equalsIgnoreCase(p.getStatus())) {
+                Map<String, Object> map = new java.util.HashMap<>();
+                map.put("id", p.getId());
+                map.put("username", p.getUsername());
+                map.put("route", p.getRoute());
+                map.put("date", new java.text.SimpleDateFormat("dd/MM/yyyy").format(p.getPurchaseDate()));
+                map.put("time", "");
+                map.put("seats", "Thẻ " + p.getType());
+                map.put("total", "DAY".equals(p.getType()) ? 10000 : "MONTH".equals(p.getType()) ? 120000 : 950000);
+                map.put("status", "ACTIVE".equalsIgnoreCase(p.getStatus()) ? "success" : "failed");
+                map.put("type", "PASS");
+                result.add(map);
+            }
+        }
+        
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/booked-seats")
@@ -137,6 +251,23 @@ public class TicketRestController {
         }
         
         String newStatus = body.get("status");
+        
+        if (id.startsWith("PS-")) {
+            Optional<com.example.HUTECHBUS.model.TicketPass> optPass = ticketPassRepository.findById(id);
+            if (optPass.isPresent()) {
+                com.example.HUTECHBUS.model.TicketPass pass = optPass.get();
+                if ("success".equals(newStatus)) {
+                    pass.setStatus("ACTIVE");
+                } else {
+                    pass.setStatus("FAILED");
+                }
+                ticketPassRepository.save(pass);
+                return ResponseEntity.ok(Map.of("success", true));
+            } else {
+                return ResponseEntity.status(404).body(Map.of("error", "Not found"));
+            }
+        }
+
         Optional<Ticket> optTicket = ticketRepository.findById(id);
         if (optTicket.isPresent()) {
             Ticket ticket = optTicket.get();
@@ -187,6 +318,16 @@ public class TicketRestController {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
         
+        if (id.startsWith("PS-")) {
+            Optional<com.example.HUTECHBUS.model.TicketPass> optPass = ticketPassRepository.findById(id);
+            if (optPass.isPresent()) {
+                ticketPassRepository.deleteById(id);
+                return ResponseEntity.ok(Map.of("success", true));
+            } else {
+                return ResponseEntity.status(404).body(Map.of("error", "Not found"));
+            }
+        }
+
         Optional<Ticket> optTicket = ticketRepository.findById(id);
         if (optTicket.isPresent()) {
             ticketRepository.deleteById(id);

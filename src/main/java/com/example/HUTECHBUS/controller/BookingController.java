@@ -21,4 +21,9 @@ public class BookingController {
     public String showMyTicketsPage() {
         return "my-tickets";
     }
+
+    @GetMapping("/buy-pass")
+    public String showBuyPassPage() {
+        return "buy-pass";
+    }
 }

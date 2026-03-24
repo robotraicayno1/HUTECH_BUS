@@ -5,9 +5,27 @@ const seatPrice = 10000; // Giá tiền mỗi vé (VD: 10.000 VNĐ)
 
 // Lưu trữ các ghế đã chọn
 let selectedSeats = [];
+let userHasPass = false;
 
 // Khởi tạo sơ đồ khi tải trang
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Lấy route
+    const urlParams = new URLSearchParams(window.location.search);
+    window.currentRouteName = urlParams.get('routeId') || 'Campus A - Campus E';
+
+    // Kiem tra Ve Dinh Ky
+    try {
+        const res = await fetch('/api/passes/my?route=' + encodeURIComponent(window.currentRouteName));
+        const data = await res.json();
+        if (data && data.status === 'ACTIVE') {
+            userHasPass = true;
+            const detailRow = document.createElement('div');
+            detailRow.className = 'detail-row';
+            detailRow.innerHTML = `<span style="color:#10b981; font-weight:bold;">Khuyến mãi:</span> <strong style="color:#10b981;">Đã áp dụng Thẻ Tháng</strong>`;
+            document.querySelector('.summary-details').insertBefore(detailRow, document.querySelector('.detail-row.total'));
+        }
+    } catch(e) {}
+
     initBusLayout();
     startCountdown(30 * 60); // Đếm ngược 30 phút (tính bằng giây)
 });
@@ -18,7 +36,7 @@ async function initBusLayout() {
     container.innerHTML = '';
 
     // Lấy ghế đã đặt từ backend
-    const route = 'Khu A - Khu E';
+    const route = window.currentRouteName || 'Campus A - Campus E';
     const date = new Date().toLocaleDateString('vi-VN');
     const time = '07:30 AM';
     let bookedSeatsList = [];
@@ -110,11 +128,16 @@ function updateSummary() {
         selectedListEl.textContent = selectedSeats.join(', ');
 
         // Cập nhật giá tiền
-        const total = selectedSeats.length * seatPrice;
+        let total = selectedSeats.length * seatPrice;
+        if (userHasPass) total = 0;
+        
         totalPriceEl.textContent = total.toLocaleString('vi-VN') + ' VNĐ';
 
         // Kích hoạt nút thanh toán
         btnCheckout.disabled = false;
+        if (userHasPass) {
+            btnCheckout.textContent = 'Xác nhận bằng Thẻ tháng';
+        }
     }
 }
 
@@ -163,20 +186,27 @@ const vietqrImg = document.getElementById('vietqr-img');
 
 // Mở modal thanh toán khi bấm "Thanh Toán Bằng QR"
 document.getElementById('btn-checkout').addEventListener('click', () => {
-    const totalAmount = selectedSeats.length * seatPrice;
+    let totalAmount = selectedSeats.length * seatPrice;
+    if (userHasPass) totalAmount = 0;
+    
     const orderInfo = `Ve xe HUTECH ${selectedSeats.join('')}`;
 
-    // Tạo link QR từ VietQR API
-    const qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-qr_only.png?amount=${totalAmount}&addInfo=${encodeURIComponent(orderInfo)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
-
-    // Cập nhật text trong modal
-    document.getElementById('modal-total-amount').textContent = totalAmount.toLocaleString('vi-VN') + ' VNĐ';
-    document.getElementById('modal-transfer-content').textContent = orderInfo;
-
-    vietqrImg.src = qrUrl;
-    paymentModal.classList.remove('hidden');
+    if (totalAmount > 0) {
+        // Tạo link QR từ VietQR API
+        const qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-qr_only.png?amount=${totalAmount}&addInfo=${encodeURIComponent(orderInfo)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+    
+        // Cập nhật text trong modal
+        document.getElementById('modal-total-amount').textContent = totalAmount.toLocaleString('vi-VN') + ' VNĐ';
+        document.getElementById('modal-transfer-content').textContent = orderInfo;
+    
+        vietqrImg.src = qrUrl;
+        paymentModal.classList.remove('hidden');
+    } else {
+        alert("Đang xử lý đặt vé bằng Thẻ Định Kỳ (0 VNĐ)...");
+    }
 
     // Tự động đẩy vé sang hệ thống Admin ở trạng thái chờ duyệt (Pending) NGAY LẬP TỨC
+    // Đối với thẻ định kỳ, backend sẽ tự động xét duyệt thành 'success' ngay
     localStorage.setItem('hutech_booked_seats', JSON.stringify(selectedSeats));
     localStorage.setItem('hutech_current_ticket_status', 'pending');
 
@@ -184,7 +214,7 @@ document.getElementById('btn-checkout').addEventListener('click', () => {
         id: 'HT' + Math.floor(Math.random() * 1000000),
         date: new Date().toLocaleDateString('vi-VN'),
         time: '07:30 AM',
-        route: 'Khu A - Khu E',
+        route: window.currentRouteName || 'Campus A - Campus E',
         seats: selectedSeats.join(', '),
         total: (selectedSeats.length * seatPrice),
         status: 'pending' // Chờ hệ thống tự quét

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECH BUS - Mua Vé Định Kỳ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/booking.css}">
+    <style>
+        .pass-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .pass-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .pass-card:hover {
+            transform: translateY(-5px);
+        }
+        .pass-card.selected {
+            border-color: var(--primary);
+            background: #fff;
+        }
+        .pass-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 1rem 0;
+        }
+        .pass-btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="glass-header">
+            <div class="logo">
+                <h1>HUTECH<span>BUS</span></h1>
+            </div>
+            <nav style="display: flex; gap: 1rem;">
+                <a href="/index" style="color:var(--text); text-decoration:none; font-weight:500;">Trang Chủ</a>
+                <a href="/my-tickets" style="color:var(--text); text-decoration:none; font-weight:500;">Vé Của Tôi</a>
+            </nav>
+        </header>
+
+        <main>
+            <h2 style="text-align:center; margin-top: 2rem;">Đăng Ký Thẻ Định Kỳ</h2>
+            <div style="text-align:center; margin-top: 1rem; margin-bottom: 2rem;">
+                <label for="route-select" style="font-weight: 600; font-size: 1.1rem;">Chọn Tuyến Xe:</label>
+                <select id="route-select" style="margin-left: 10px; padding: 10px; border-radius: 8px; font-size: 1rem; border: 1px solid #ccc; width: 300px;">
+                    <option value="Campus A - Campus E">Tuyến 01: Campus A - Campus E</option>
+                    <option value="ĐH Nông Lâm - HUTECH Campus E - Dĩ An">Tuyến 167: ĐH Nông Lâm - HUTECH Campus E</option>
+                    <option value="Sinh Hoạt Theo Lớp (Khu A)">Tuyến Đặc Biệt: Phục vụ Lớp Học</option>
+                </select>
+            </div>
+
+            <div class="pass-container" id="pass-options">
+                <div class="pass-card" data-type="DAY" data-price="10000">
+                    <h3>Vé 1 Ngày</h3>
+                    <div class="pass-price">10.000đ</div>
+                    <p>Đi không giới hạn trong 24 giờ trên Tuyến Đăng Ký</p>
+                    <button class="pass-btn">Chọn Mua</button>
+                </div>
+                <div class="pass-card" data-type="MONTH" data-price="120000">
+                    <h3>Vé M1 Tháng</h3>
+                    <div class="pass-price">120.000đ</div>
+                    <p>Đi không giới hạn trong 30 ngày trên Tuyến Đăng Ký</p>
+                    <button class="pass-btn">Chọn Mua</button>
+                </div>
+                <div class="pass-card" data-type="YEAR" data-price="950000">
+                    <h3>Vé 1 Năm</h3>
+                    <div class="pass-price">950.000đ</div>
+                    <p>Vé Sinh Viên VIP: 365 ngày trên Tuyến Đăng Ký</p>
+                    <button class="pass-btn">Chọn Mua</button>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 2rem; display: none;" id="checkout-section">
+                <div class="glass-card" style="display:inline-block; padding: 2rem; text-align:center;">
+                    <h3>Thanh Toán Ngân Hàng</h3>
+                    <p>Bạn đang mua <strong id="selected-pass-name"></strong> với giá <strong id="selected-pass-price"></strong></p>
+                    <img src="https://img.vietqr.io/image/970415-113366668888-print.png?amount=20000&addInfo=HUTECH%20PASS&accountName=NGUYEN%20VAN%20A" id="qr-image" style="max-width:200px; margin: 1rem auto; display:block;">
+                    <button class="pass-btn" id="btn-confirm-payment">Xác nhận thanh toán (Mocha)</button>
+                    <p id="payment-status" style="margin-top:1rem; font-weight:bold; color:var(--primary);"></p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.pass-card');
+            const checkoutSection = document.getElementById('checkout-section');
+            const routeSelect = document.getElementById('route-select');
+            let selectedType = '';
+            
+            // Lấy route từ URL nếu có
+            const paramStr = window.location.search;
+            const urlParams = new URLSearchParams(paramStr);
+            if(urlParams.has('route')) {
+                const urlRoute = urlParams.get('route');
+                // Thử chọn option có value gần giống route
+                for (let option of routeSelect.options) {
+                    if (option.value.includes(urlRoute) || urlRoute.includes(option.value)) {
+                        option.selected = true;
+                        break;
+                    }
+                }
+            }
+
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    cards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedType = card.dataset.type;
+                    
+                    const routeName = routeSelect.options[routeSelect.selectedIndex].text;
+                    document.getElementById('selected-pass-name').textContent = card.querySelector('h3').textContent + ' (' + routeName + ')';
+                    document.getElementById('selected-pass-price').textContent = card.querySelector('.pass-price').textContent;
+                    
+                    const price = card.dataset.price;
+                    document.getElementById('qr-image').src = `https://img.vietqr.io/image/970415-113366668888-print.png?amount=${price}&addInfo=MUA VÉ ĐỊNH KỲ&accountName=HUTECH BUS`;
+                    
+                    checkoutSection.style.display = 'block';
+                });
+            });
+            
+            document.getElementById('btn-confirm-payment').addEventListener('click', () => {
+                if(!selectedType) return;
+                
+                const selectedRouteValue = routeSelect.value;
+
+                document.getElementById('btn-confirm-payment').disabled = true;
+                document.getElementById('btn-confirm-payment').textContent = 'Đang chờ xử lý giao dịch...';
+                
+                // Gọi API backend
+                fetch('/api/passes/buy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: selectedType, route: selectedRouteValue })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.error) {
+                        alert(data.error);
+                        document.getElementById('btn-confirm-payment').disabled = false;
+                        document.getElementById('btn-confirm-payment').textContent = 'Thử Lại';
+                    } else {
+                        document.getElementById('payment-status').textContent = 'Đang tự động xác nhận từ ngân hàng (5s)...';
+                        setTimeout(() => {
+                            alert('Thanh toán thành công! Vé định kỳ của bạn đã được kích hoạt.');
+                            window.location.href = '/my-tickets';
+                        }, 5000);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Lỗi hệ thống!');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

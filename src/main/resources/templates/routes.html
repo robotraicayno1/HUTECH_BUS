@@ -70,6 +70,10 @@
                                  <!-- Initial state could be set via user data if passed, or just default to empty heart -->
                                  🤍
                             </div>
+                            <button class="action-btn" th:attr="data-name=${route.name}" onclick="buyPass(this.getAttribute('data-name'))"
+                                    style="padding: 8px 15px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                                Mua Thẻ Định Kỳ
+                            </button>
                             <button class="action-btn" th:attr="data-id=${route.id}" onclick="recordTrip(this.getAttribute('data-id'))"
                                     style="padding: 8px 15px; background: var(--primary-color); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
                                 Đi ngay
@@ -136,6 +140,9 @@
             // Chuyển hướng trực tiếp sang trang Đặt ghế
             window.location.href = `/booking?routeId=${id}`;
         }
+        function buyPass(routeName) {
+            window.location.href = `/buy-pass?route=${encodeURIComponent(routeName)}`;
+        }
 
         async function toggleFavorite(id, el) {
             try {
@@ -157,6 +164,12 @@
             
             const adminLink = document.getElementById('admin-sidebar-link');
             if (adminLink) adminLink.style.display = 'flex';
+            
+            // Ẩn nút chọn chuyến và mua thẻ với Admin
+            const actionBtns = document.querySelectorAll('.action-btn');
+            actionBtns.forEach(btn => btn.style.display = 'none');
+            const favBtns = document.querySelectorAll('.fav-btn');
+            favBtns.forEach(btn => btn.style.display = 'none');
         }
     </script>
 </body>

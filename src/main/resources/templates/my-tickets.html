@@ -79,6 +79,10 @@
         </header>
 
         <main style="padding: 2.5rem 0;">
+            <div id="active-pass-container" style="display: none; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 2rem; border-radius: 16px; margin-bottom: 2rem; box-shadow: 0 10px 25px rgba(16,185,129,0.2);">
+                <!-- Chứa danh sách các thẻ định kỳ đang hoạt động -->
+            </div>
+
             <h2 style="color: var(--primary); font-size: 1.8rem;">Lịch Sử Chuyến Đi Của Bạn</h2>
             <p style="color: var(--text-muted); margin-top: 0.5rem;">Nhấn vào thẻ vé bất kỳ để xem lại Mã QR Check-in.</p>
             
@@ -91,5 +95,49 @@
 
     <!-- Script nạp dữ liệu vé đã lưu tại Client -->
     <script th:src="@{/js/my-tickets.js}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/api/passes/my')
+            .then(r => r.json())
+            .then(data => {
+                if (Array.isArray(data) && data.length > 0) {
+                    const container = document.getElementById('active-pass-container');
+                    container.style.display = 'block';
+                    container.innerHTML = '';
+                    
+                    data.forEach(pass => {
+                        let typeName = 'Định Kỳ';
+                        if(pass.type === 'DAY') typeName = 'Ngày';
+                        if(pass.type === 'MONTH') typeName = 'Tháng';
+                        if(pass.type === 'YEAR') typeName = 'Năm';
+                        
+                        const expiry = new Date(pass.expiryDate);
+                        const expString = expiry.toLocaleDateString('vi-VN') + ' ' + expiry.toLocaleTimeString('vi-VN');
+                        
+                        container.innerHTML += `
+                            <div class="active-pass-banner" onclick="viewPassQR('${pass.type}')" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 1rem; margin-bottom: 1rem; cursor: pointer;">
+                                <div>
+                                    <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">💳 Thẻ <span style="font-weight:bold;">${typeName}</span></h2>
+                                    <p style="opacity: 0.9; font-weight: 600;">🚌 Tuyến: ${pass.route}</p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="font-size: 0.9rem; opacity: 0.8; display: block;">Ngày hết hạn</span>
+                                    <strong style="font-size: 1.1rem;">${expString}</strong>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            })
+            .catch(err => console.error(err));
+        });
+        
+        function viewPassQR(passType) {
+            localStorage.setItem('hutech_booked_seats', JSON.stringify(['Thẻ ' + passType]));
+            localStorage.setItem('hutech_current_ticket_status', 'success');
+            localStorage.removeItem('hutech_current_ticket_id');
+            window.location.href = '/ticket';
+        }
+    </script>
 </body>
 </html>
