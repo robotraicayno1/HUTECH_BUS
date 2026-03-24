@@ -44,10 +44,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-<<<<<<< HEAD
-=======
             .authenticationProvider(authenticationProvider())
->>>>>>> MINHTAI
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/booking.html", "/index.html", "/css/**", "/js/**", "/images/**", "/api/**").permitAll()

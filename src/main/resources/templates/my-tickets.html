@@ -4,8 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HUTECH BUS - Vé Đã Đặt</title>
-    <!-- Gắn file CSS chung của hệ thống đặt chỗ -->
-    <link rel="stylesheet" th:href="@{/css/booking.css}">
+    <!-- Unified sidebar styles -->
+    <style>
+        body { display:flex; height:100vh; }
+        .sidebar { width:260px; background:#003366; color:white; padding:28px 18px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; flex-shrink:0; }
+        .sidebar-logo { font-size:1.5rem; font-weight:800; color:white; letter-spacing:-1px; margin-bottom:28px; padding:0 8px; }
+        .sidebar-logo span { color:#ff6b00; }
+        .nav-section-label { font-size:0.65rem; font-weight:700; letter-spacing:1.5px; color:rgba(255,255,255,0.35); text-transform:uppercase; padding:12px 10px 4px; }
+        .nav-link { display:flex; align-items:center; gap:10px; padding:11px 14px; color:rgba(255,255,255,0.65); text-decoration:none; border-radius:10px; font-size:0.9rem; font-weight:500; transition:all 0.2s ease; }
+        .nav-link:hover { background:rgba(255,255,255,0.08); color:white; }
+        .nav-link.active { background:#ff6b00; color:white; box-shadow:0 4px 15px rgba(255,107,0,0.35); }
+        .nav-icon { font-size:1rem; width:20px; text-align:center; }
+        .sidebar-footer { margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); }
+        .page-content { flex:1; overflow-y:auto; background: linear-gradient(135deg, #0d1b2a 0%, #1a2a4a 100%); }
+    </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Tùy chỉnh CSS riêng cho trang danh sách vé */
@@ -65,6 +77,27 @@
     </style>
 </head>
 <body>
+    <link rel="stylesheet" th:href="@{/css/booking.css}">
+    <aside class="sidebar">
+        <div class="sidebar-logo">HUTECH<span>BUS</span></div>
+        <div class="nav-section-label">Chính</div>
+        <a href="/dashboard" class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="/routes" class="nav-link"><span class="nav-icon">🚌</span> Tra cứu &amp; Đặt chỗ</a>
+        <a href="/my-tickets" class="nav-link active"><span class="nav-icon">🎫</span> Vé của tôi</a>
+        <div class="nav-section-label">Thẻ &amp; Điểm</div>
+        <a href="/buy-pass" class="nav-link"><span class="nav-icon">💳</span> Mua Thẻ Vé Định Kỳ</a>
+        <a href="/points" class="nav-link"><span class="nav-icon">🎯</span> H-Point &amp; Voucher</a>
+        <div class="nav-section-label">Thông tin</div>
+        <a href="/history" class="nav-link"><span class="nav-icon">📋</span> Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link"><span class="nav-icon">❤️</span> Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link"><span class="nav-icon">🔔</span> Thông báo</a>
+        <div class="nav-section-label">Hệ thống</div>
+        <a href="/driver/app" class="nav-link"><span class="nav-icon">📱</span> Giao diện Tài xế</a>
+        <div class="sidebar-footer"><a href="/dashboard" class="nav-link"><span class="nav-icon">⚙️</span> Cài đặt tài khoản</a></div>
+    </aside>
+
+    <div class="page-content">
+    <div class="app-container" style="min-height:100%;">
     <div class="app-container">
         <!-- Header điều hướng phía trên -->
         <header class="glass-header">

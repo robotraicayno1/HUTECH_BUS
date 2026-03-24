@@ -7,11 +7,17 @@
     <link rel="stylesheet" th:href="@{/css/booking.css}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .pass-container {
-            max-width: 800px;
-            margin: 100px auto;
-            padding: 20px;
-        }
+        body { display:flex; height:100vh; background: linear-gradient(135deg, #0d1b2a 0%, #003366 100%); }
+        .sidebar { width:260px; background:rgba(0,0,0,0.3); backdrop-filter:blur(10px); color:white; padding:28px 18px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; flex-shrink:0; border-right: 1px solid rgba(255,255,255,0.08); }
+        .sidebar-logo { font-size:1.5rem; font-weight:800; color:white; letter-spacing:-1px; margin-bottom:28px; padding:0 8px; }
+        .sidebar-logo span { color:#ff6b00; }
+        .nav-section-label { font-size:0.65rem; font-weight:700; letter-spacing:1.5px; color:rgba(255,255,255,0.35); text-transform:uppercase; padding:12px 10px 4px; }
+        .nav-link { display:flex; align-items:center; gap:10px; padding:11px 14px; color:rgba(255,255,255,0.65); text-decoration:none; border-radius:10px; font-size:0.9rem; font-weight:500; transition:all 0.2s ease; }
+        .nav-link:hover { background:rgba(255,255,255,0.08); color:white; }
+        .nav-link.active { background:#ff6b00; color:white; box-shadow:0 4px 15px rgba(255,107,0,0.35); }
+        .nav-icon { font-size:1rem; width:20px; text-align:center; }
+        .sidebar-footer { margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); }
+        .page-content { flex:1; overflow-y:auto; }
         .pass-options {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -60,21 +66,42 @@
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <header class="glass-header">
-            <div class="logo">
-                <h1>HUTECH<span>BUS</span></h1>
-            </div>
-            <nav style="display: flex; gap: 20px;">
-                <a href="/dashboard" style="color: white; text-decoration: none;">Trang chủ</a>
-                <a href="/booking" style="color: white; text-decoration: none;">Đặt ghế</a>
-            </nav>
-        </header>
+    <aside class="sidebar">
+        <div class="sidebar-logo">HUTECH<span>BUS</span></div>
+        <div class="nav-section-label">Chính</div>
+        <a href="/dashboard" class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="/routes" class="nav-link"><span class="nav-icon">🚌</span> Tra cứu &amp; Đặt chỗ</a>
+        <a href="/my-tickets" class="nav-link"><span class="nav-icon">🎫</span> Vé của tôi</a>
+        <div class="nav-section-label">Thẻ &amp; Điểm</div>
+        <a href="/buy-pass" class="nav-link active"><span class="nav-icon">💳</span> Mua Thẻ Vé Định Kỳ</a>
+        <a href="/points" class="nav-link"><span class="nav-icon">🎯</span> H-Point &amp; Voucher</a>
+        <div class="nav-section-label">Thông tin</div>
+        <a href="/history" class="nav-link"><span class="nav-icon">📋</span> Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link"><span class="nav-icon">❤️</span> Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link"><span class="nav-icon">🔔</span> Thông báo</a>
+        <div class="nav-section-label">Hệ thống</div>
+        <a href="/driver/app" class="nav-link"><span class="nav-icon">📱</span> Giao diện Tài xế</a>
+        <div class="sidebar-footer"><a href="#" class="nav-link"><span class="nav-icon">⚙️</span> Cài đặt tài khoản</a></div>
+    </aside>
 
-        <main class="pass-container">
+    <div class="page-content">
+        <div class="app-container" style="min-height:100%;">
             <h1 style="text-align: center; color: white;">Chọn Gói Thẻ Vé Tiết Kiệm</h1>
             <p style="text-align: center; color: var(--text-muted);">Mua một lần, đi thoải mái cả kỳ học!</p>
             
+            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin: 20px 0; color: white;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <span style="font-weight: 600;">Điểm H-Point của bạn:</span>
+                    <span id="currentPoints" style="color: var(--primary); font-size: 1.2rem; font-weight: 700;" th:text="${hPoints != null ? hPoints : 0}">0</span>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <span style="font-size: 0.9rem; flex: 1;">Số điểm muốn sử dụng (1 điểm = 100Đ):</span>
+                    <input type="number" id="pointsToUse" value="0" min="0" 
+                           style="width: 100px; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: white; text-align: center;">
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; margin-bottom: 0;">* Điểm sẽ được trừ trực tiếp vào giá vé ngay sau khi xác nhận.</p>
+            </div>
+
             <div style="background: rgba(255,107,0,0.1); border: 1px solid var(--primary); padding: 15px; border-radius: 12px; margin-top: 20px; color: white; display: flex; align-items: center; gap: 15px;">
                 <span style="font-size: 1.5rem;">💡</span>
                 <p style="font-size: 0.9rem; margin: 0;">
@@ -108,25 +135,52 @@
                 </div>
             </div>
         </main>
+        </div>
     </div>
 
     <script>
-        async function confirmBuy(type, price) {
-            if (!confirm(`Bạn có chắc chắn muốn mua ${type === 'WEEK' ? 'Thẻ Tuần' : type === 'MONTH' ? 'Thẻ Tháng' : 'Thẻ Năm'} với giá ${price} VNĐ?`)) {
+        async function confirmBuy(type, priceStr) {
+            const currentPoints = parseInt(document.getElementById('currentPoints').innerText) || 0;
+            const pointsToUse = parseInt(document.getElementById('pointsToUse').value) || 0;
+            
+            if (pointsToUse < 0) {
+                alert('Số điểm không hợp lệ.');
                 return;
             }
+
+            if (pointsToUse > currentPoints) {
+                alert('Bạn không đủ điểm H-Point.');
+                return;
+            }
+
+            const price = parseInt(priceStr.replace(/\./g, ''));
+            const discount = pointsToUse * 100;
+            const finalPrice = Math.max(0, price - discount);
+
+            let confirmMsg = `Bạn có chắc chắn muốn mua ${type === 'WEEK' ? 'Thẻ Tuần' : type === 'MONTH' ? 'Thẻ Tháng' : 'Thẻ Năm'}?`;
+            if (pointsToUse > 0) {
+                confirmMsg += `\nSử dụng ${pointsToUse} điểm để giảm giá ${discount.toLocaleString()} đ.`;
+                confirmMsg += `\nSố tiền thực tế: ${finalPrice.toLocaleString()} VNĐ.`;
+            } else {
+                confirmMsg += `\nSố tiền: ${price.toLocaleString()} VNĐ.`;
+            }
+
+            if (!confirm(confirmMsg)) return;
 
             try {
                 const response = await fetch('/api/passes/buy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: type })
+                    body: JSON.stringify({ type: type, pointsToUse: pointsToUse })
                 });
 
                 if (response.ok) {
                     const data = await response.json();
                     if (data.paymentUrl) {
                         window.location.href = data.paymentUrl;
+                    } else if (data.redirect) {
+                        alert(data.message || 'Thanh toán bằng điểm thành công!');
+                        window.location.href = data.redirect;
                     } else {
                         alert('🎉 Chúc mừng! Bạn đã mua thẻ thành công.');
                         window.location.href = '/booking';

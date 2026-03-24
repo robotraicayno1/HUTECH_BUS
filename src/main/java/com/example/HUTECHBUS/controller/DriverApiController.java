@@ -201,6 +201,10 @@ public class DriverApiController {
             trip.setCheckedInSeats(checkedIn);
             ActiveTrip saved = activeTripRepository.save(trip);
 
+            // Cộng 10 điểm thưởng cho mỗi lần đi xe (Check-in thành công)
+            student.setHPoints(student.getHPoints() + 10);
+            userRepository.save(student);
+
             // Kiểm tra thẻ vé
             String passStatus = "NONE";
             String passType = "NONE";
@@ -214,7 +218,7 @@ public class DriverApiController {
             }
 
             return ResponseEntity.ok(Map.of(
-                    "message", "Xac nhan len xe thanh cong (Check-in).",
+                    "message", "Xac nhan len xe thanh cong (+10 H-Point).",
                     "studentName", student.getFullName(),
                     "seatNumber", userSeats.get(0),
                     "passStatus", passStatus,
@@ -245,6 +249,10 @@ public class DriverApiController {
         trip.setCheckedInSeats(checkedIn);
         ActiveTrip saved = activeTripRepository.save(trip);
 
+        // Cộng 10 điểm thưởng cho mỗi lần đi xe (Check-in thành công - Walk-in)
+        student.setHPoints(student.getHPoints() + 10);
+        userRepository.save(student);
+
         // Kiểm tra thẻ vé
         String passStatus = "NONE";
         String passType = "NONE";
@@ -258,7 +266,7 @@ public class DriverApiController {
         }
 
         return ResponseEntity.ok(Map.of(
-                "message", "Da xep ghe va Check-in thanh cong.",
+                "message", "Da xep ghe va Check-in thanh cong (+10 H-Point).",
                 "studentName", student.getFullName(),
                 "seatNumber", assignedSeat,
                 "passStatus", passStatus,

@@ -116,21 +116,30 @@ public class PaymentController {
             if (orderInfo != null && orderInfo.startsWith("PASS:")) {
                 // Xử lý logic mua/gia hạn thẻ vé
                 String[] parts = orderInfo.split(":");
-                // Cấu trúc dự kiến: PASS:{LoạiThẻ}:{Username}
+                // Cấu trúc dự kiến: PASS:{LoạiThẻ}:{Username}:{PointsToUse}
                 if (parts.length >= 3) {
                     String type = parts[1]; // WEEK, MONTH, YEAR
                     String username = parts[2];
+                    int pointsUsed = 0;
+                    if (parts.length >= 4) {
+                        try {
+                            pointsUsed = Integer.parseInt(parts[3]);
+                        } catch (NumberFormatException ignored) {}
+                    }
                     
                     Optional<User> userOpt = userRepository.findByUsername(username);
                     if (userOpt.isPresent()) {
                         User user = userOpt.get();
+
+                        // Trừ điểm nếu có sử dụng
+                        if (pointsUsed > 0) {
+                            user.setHPoints(user.getHPoints() - pointsUsed);
+                        }
                         
                         LocalDateTime now = LocalDateTime.now();
                         LocalDateTime startDate = now;
 
                         // -- LOGIC GIA HẠN KHI THẺ CŨ CÒN HẠN (CHAINING) --
-                        // Nếu user đã có thẻ và thẻ đó còn hạn, thẻ mới sẽ được kích hoạt 
-                        // nối tiếp từ ngày thẻ cũ hết hạn để không bị mất ngày sử dụng.
                         if (user.getActivePassId() != null) {
                             Optional<TicketPass> oldPassOpt = ticketPassRepository.findById(user.getActivePassId());
                             if (oldPassOpt.isPresent() && "ACTIVE".equals(oldPassOpt.get().getStatus())) {
@@ -155,11 +164,11 @@ public class PaymentController {
                         newPass.setType(type.toUpperCase());
                         newPass.setPurchaseDate(now);
                         newPass.setExpiryDate(expiryDate);
-                        newPass.setStatus("ACTIVE"); // Đánh dấu thẻ là đang hoạt động
+                        newPass.setStatus("ACTIVE");
 
                         TicketPass savedPass = ticketPassRepository.save(newPass);
                         
-                        // Cập nhật lại User để tham chiếu đến thẻ mới nhất
+                        // Cập nhật lại User
                         user.setActivePassId(savedPass.getId());
                         userRepository.save(user);
                     }

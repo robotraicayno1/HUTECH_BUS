@@ -96,7 +96,12 @@ public class BookingController {
      * Giao diện chọn mua các gói Thẻ Vé Định Kỳ (Tuần/Tháng/Năm).
      */
     @GetMapping("/buy-pass")
-    public String showBuyPassPage() {
+    public String showBuyPassPage(Model model, Principal principal) {
+        if (principal != null) {
+            userRepository.findByUsername(principal.getName()).ifPresent(user -> {
+                model.addAttribute("hPoints", user.getHPoints());
+            });
+        }
         return "buy-pass";
     }
 
