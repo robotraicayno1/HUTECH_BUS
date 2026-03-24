@@ -150,30 +150,35 @@
     <div class="sidebar">
         <h2>HUTECH<span>BUS</span></h2>
         
-        <a href="/" class="nav-link-custom">Dashboard (User)</a>
-        <a href="/routes" class="nav-link-custom">Tra cứu lộ trình</a>
-        <a href="/history" class="nav-link-custom">Lịch sử chuyến đi</a>
-        <a href="/favorites" class="nav-link-custom">Đã lưu / Yêu thích</a>
-        <a href="/notifications" class="nav-link-custom">Thông báo</a>
-        
-        <div class="mt-4 mb-2 ps-3 text-white-50 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">QUẢN TRỊ ADMIN</div>
-        
-        <a data-bs-toggle="collapse" href="#adminCollapse" role="button" aria-expanded="true" class="nav-link-custom d-flex justify-content-between align-items-center">
-            <span>Tính năng quản lý</span>
-            <i class="bi bi-chevron-down" style="font-size: 0.8rem;"></i>
+        <div class="mt-2 mb-3 ps-2 text-white-50 fw-bold" style="font-size: 0.8rem; letter-spacing: 1px;">Quyền Admin</div>
+
+        <a href="/admin/dashboard" class="nav-link-custom" th:classappend="${activeMenu == 'dashboard'} ? 'active' : ''">
+            <i class="bi bi-grid-1x2-fill me-2"></i> Tổng quan
+        </a>
+        <a href="/admin/vehicles" class="nav-link-custom" th:classappend="${activeMenu == 'vehicles'} ? 'active' : ''">
+            <i class="bi bi-bus-front-fill me-2"></i> Quản lý Xe Bus
+        </a>
+        <a href="/admin/routes" class="nav-link-custom" th:classappend="${activeMenu == 'routes'} ? 'active' : ''">
+            <i class="bi bi-map-fill me-2"></i> Quản lý Tuyến
+        </a>
+        <a href="/admin/stops" class="nav-link-custom" th:classappend="${activeMenu == 'stops'} ? 'active' : ''">
+            <i class="bi bi-geo-alt-fill me-2"></i> Quản lý Trạm dừng
         </a>
         
-        <div class="collapse show" id="adminCollapse">
-            <div class="admin-submenu">
-                <a href="/admin/dashboard" class="nav-link-custom" th:classappend="${activeMenu == 'dashboard'} ? 'active' : ''">Tổng quan</a>
-                <a href="/admin/vehicles" class="nav-link-custom" th:classappend="${activeMenu == 'vehicles'} ? 'active' : ''">Quản lý Xe Bus</a>
-                <a href="/admin/routes" class="nav-link-custom" th:classappend="${activeMenu == 'routes'} ? 'active' : ''">Quản lý Tuyến</a>
-                <a href="/admin/stops" class="nav-link-custom" th:classappend="${activeMenu == 'stops'} ? 'active' : ''">Quản lý Trạm dừng</a>
-            </div>
-        </div>
+        <div class="mt-4 mb-3 ps-2 text-white-50 fw-bold" style="font-size: 0.8rem; letter-spacing: 1px;">Quản lý Người Dùng</div>
+        <a href="/admin/students" class="nav-link-custom" th:classappend="${activeMenu == 'students'} ? 'active' : ''">
+            <i class="bi bi-people-fill me-2"></i> Quản lý Sinh viên
+        </a>
+        <a href="/admin/staffs" class="nav-link-custom" th:classappend="${activeMenu == 'staffs'} ? 'active' : ''">
+            <i class="bi bi-person-badge-fill me-2"></i> Quản lý Nhân sự
+        </a>
         
         <div style="flex: 1;"></div>
-        <a href="#" class="nav-link-custom mt-5">Cài đặt tài khoản</a>
+        
+        <!-- Tuỳ chọn trở về trang User dành cho Admin -->
+        <a href="/" class="nav-link-custom mt-5" style="background: rgba(255,255,255,0.05);">
+            <i class="bi bi-box-arrow-left me-2"></i> Về trang User
+        </a>
     </div>
 
     <!-- Main Content -->
