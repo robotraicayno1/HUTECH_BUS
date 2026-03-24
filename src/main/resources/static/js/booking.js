@@ -92,24 +92,40 @@ function initBusLayout(tripData) {
     }
 
     const totalSeats = tripData ? tripData.totalSeats : 45;
+    container.dataset.total = totalSeats;
 
     for (let i = 1; i <= totalSeats; i++) {
         createSeatElement(container, i, bookedSeatsList);
     }
 }
 
-// Xây dựng 1 phần tử Ghế trong DOM
+// Xây dựng 1 phần tử Ghế trong DOM với đúng cột trong grid
 function createSeatElement(container, seatId, bookedSeatsList) {
+    const totalSeats = container.dataset.total ? parseInt(container.dataset.total) : 45;
+
+    // Tính vị trí cột trong layout 5 cột: [A | B | aisle | C | D]
+    // Xe 45 ghế: 40 ghế thường (10 hàng × 4) + hàng cuối 5 ghế
+    // Ghế thường: theo thứ tự 1,2,3,4 → cột 1,2,4,5
+    const COL_MAP = [1, 2, 4, 5]; // cột tương ứng cho ghế 1→4 trong mỗi hàng
+    let gridCol = null;
+
+    if (totalSeats === 45 && seatId >= 41) {
+        // Hàng cuối 5 ghế → trải đều 5 cột
+        gridCol = seatId - 40; // 1 → 5
+    } else {
+        const posInRow = (seatId - 1) % 4; // 0,1,2,3
+        gridCol = COL_MAP[posInRow];
+    }
+
     const seat = document.createElement('div');
     seat.className = 'seat';
     seat.textContent = seatId;
-    seat.dataset.id = seatId; // Gắn data-id để dễ truy xuất
+    seat.dataset.id = seatId;
+    if (gridCol) seat.style.gridColumn = gridCol;
 
-    // Kiểm tra nếu ghế nằm trong mảng đã bị người khác đặt (API trả về số nguyên)
     if (bookedSeatsList.includes(parseInt(seatId))) {
         seat.classList.add('booked');
     } else {
-        // Nếu ghế trống, gán sự kiện click để chọn/bỏ chọn
         seat.addEventListener('click', handleSeatClick);
     }
 
@@ -235,6 +251,7 @@ document.getElementById('btn-checkout').addEventListener('click', async () => {
             if (userPass || paymentMethod === 'CASH') {
                 localStorage.setItem('hutech_booked_seats', JSON.stringify(selectedSeats));
                 localStorage.setItem('hutech_current_pickup_point', pickupPoint);
+                localStorage.setItem('hutech_current_payment_status', userPass ? 'Sử dụng Thẻ Vé' : 'Thanh Toán Tại Xe');
 
                 alert(userPass ? '✅ Xác nhận ghế thành công bằng Thẻ Vé!' : '✅ Đặt chỗ thành công! Vui lòng thanh toán tiền mặt khi lên xe.');
                 window.location.href = '/my-tickets';
@@ -256,6 +273,7 @@ document.getElementById('btn-checkout').addEventListener('click', async () => {
                 if (paymentData.code === "00") {
                     localStorage.setItem('hutech_booked_seats', JSON.stringify(selectedSeats));
                     localStorage.setItem('hutech_current_pickup_point', pickupPoint);
+                    localStorage.setItem('hutech_current_payment_status', 'Đã Thanh Toán');
                     window.location.href = paymentData.data; 
                 } else {
                     alert('Lỗi tạo link thanh toán: ' + paymentData.message);

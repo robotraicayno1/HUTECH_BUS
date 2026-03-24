@@ -5,6 +5,7 @@ import com.example.HUTECHBUS.model.Stop;
 import com.example.HUTECHBUS.model.Vehicle;
 import com.example.HUTECHBUS.repository.RouteRepository;
 import com.example.HUTECHBUS.repository.StopRepository;
+import com.example.HUTECHBUS.repository.TripHistoryRepository;
 import com.example.HUTECHBUS.repository.VehicleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -26,6 +27,9 @@ public class AdminController {
     @Autowired
     private StopRepository stopRepository;
 
+    @Autowired
+    private TripHistoryRepository tripHistoryRepository;
+
     // --- Dashboard ---
     @GetMapping({"", "/", "/dashboard"})
     public String dashboard(Model model, Principal principal) {
@@ -35,6 +39,28 @@ public class AdminController {
         model.addAttribute("vehicleCount", vehicleRepository.count());
         model.addAttribute("routeCount", routeRepository.count());
         model.addAttribute("stopCount", stopRepository.count());
+
+        // --- DỮ LIỆU BIỂU ĐỒ (7 ngày gần nhất) ---
+        java.time.LocalDateTime sevenDaysAgo = java.time.LocalDateTime.now().minusDays(7);
+        java.util.List<com.example.HUTECHBUS.model.TripHistory> history = tripHistoryRepository.findByTripDateAfter(sevenDaysAgo);
+
+        // Nhóm theo ngày (yyyy-MM-dd)
+        java.util.Map<java.time.LocalDate, Long> trafficData = new java.util.TreeMap<>();
+        // Khởi tạo 7 ngày với giá trị 0
+        for (int i = 0; i < 7; i++) {
+            trafficData.put(java.time.LocalDate.now().minusDays(i), 0L);
+        }
+
+        for (com.example.HUTECHBUS.model.TripHistory h : history) {
+            java.time.LocalDate date = h.getTripDate().toLocalDate();
+            if (trafficData.containsKey(date)) {
+                trafficData.put(date, trafficData.get(date) + 1);
+            }
+        }
+
+        model.addAttribute("chartLabels", trafficData.keySet().stream().map(d -> d.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM"))).toArray());
+        model.addAttribute("chartValues", trafficData.values().toArray());
+
         return "admin/dashboard";
     }
 
