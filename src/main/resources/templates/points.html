@@ -5,69 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HUTECHBUS - Đổi Điểm & Voucher</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
     <style>
-        :root {
-            --primary-color: #ff6b00;
-            --secondary-color: #003366;
-            --bg-color: #f0f2f5;
-            --card-shadow: 0 4px 25px rgba(0,0,0,0.08);
-            --gradient-primary: linear-gradient(135deg, #ff6b00, #ff8c33);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { display: flex; height: 100vh; background-color: var(--bg-color); color: #333; }
-
-        .sidebar { width:260px; background:#003366; color:white; padding:28px 18px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; flex-shrink:0; }
-        .sidebar-logo { font-size:1.5rem; font-weight:800; color:white; letter-spacing:-1px; margin-bottom:28px; padding:0 8px; }
-        .sidebar-logo span { color:#ff6b00; }
-        .nav-section-label { font-size:0.65rem; font-weight:700; letter-spacing:1.5px; color:rgba(255,255,255,0.35); text-transform:uppercase; padding:12px 10px 4px; }
-        .nav-link { display:flex; align-items:center; gap:10px; padding:11px 14px; color:rgba(255,255,255,0.65); text-decoration:none; border-radius:10px; font-size:0.9rem; font-weight:500; transition:all 0.2s ease; }
-        .nav-link:hover { background:rgba(255,255,255,0.08); color:white; }
-        .nav-link.active { background:#ff6b00; color:white; box-shadow:0 4px 15px rgba(255,107,0,0.35); }
-        .nav-icon { font-size:1rem; width:20px; text-align:center; }
-        .sidebar-footer { margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); }
-
-        /* Main Content Styling */
-        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
+        body { overflow: hidden; }
+        .main-content { overflow-y: auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 1.6rem; font-weight: 700; color: var(--navy); }
         .user-profile { display: flex; align-items: center; gap: 15px; }
-        .user-avatar { width: 45px; height: 45px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; transition: transform 0.3s; }
+        .user-avatar { width: 45px; height: 45px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; transition: transform 0.3s; }
         .user-avatar:hover { transform: scale(1.1); }
-        .btn-logout { background: #f83a3a; color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: 0.3s; }
-        .btn-logout:hover { background: #d32f2f; }
+        .btn-logout-red { background: #f83a3a; color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: 0.3s; }
+        .btn-logout-red:hover { background: #d32f2f; }
 
         /* Points Banner */
-        .points-banner { 
-            background: var(--gradient-primary); padding: 40px; border-radius: 20px; color: white; 
+        .points-banner {
+            background: linear-gradient(135deg, var(--primary), #ff8c33); padding: 40px; border-radius: 20px; color: white;
             display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(255,107,0,0.3);
             margin-bottom: 40px; position: relative; overflow: hidden;
         }
         .points-banner::after {
-            content: ''; position: absolute; top: -50%; right: -10%; width: 300px; height: 300px; 
+            content: ''; position: absolute; top: -50%; right: -10%; width: 300px; height: 300px;
             background: rgba(255,255,255,0.1); border-radius: 50%;
         }
         .points-info h2 { font-size: 1.2rem; font-weight: 500; opacity: 0.9; margin-bottom: 5px; }
         .points-info .hpoints-val { font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; }
 
-        .section-title { font-size: 1.4rem; color: var(--secondary-color); margin-bottom: 20px; font-weight: 700; }
-
         /* Vouchers Grid */
         .vouchers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; margin-bottom: 40px; }
-        .voucher-card { 
-            background: white; border-radius: 20px; padding: 25px; box-shadow: var(--card-shadow);
-            border-top: 5px solid var(--primary-color); transition: transform 0.3s, box-shadow 0.3s;
+        .voucher-card {
+            background: var(--card-bg); border-radius: 20px; padding: 25px; box-shadow: var(--card-shadow);
+            border-top: 5px solid var(--primary); transition: transform 0.3s, box-shadow 0.3s;
             display: flex; flex-direction: column; justify-content: space-between;
         }
         .voucher-card:hover { transform: translateY(-5px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
-        .voucher-title { font-size: 1.15rem; font-weight: 700; color: #333; margin-bottom: 10px; }
-        .voucher-tag { 
-            display: inline-block; padding: 5px 10px; background: rgba(0,51,102,0.1); color: var(--secondary-color); 
+        .voucher-title { font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px; }
+        .voucher-tag {
+            display: inline-block; padding: 5px 10px; background: rgba(0,51,102,0.1); color: var(--navy);
             border-radius: 8px; font-size: 0.75rem; font-weight: 600; margin-bottom: 15px;
         }
-        .voucher-cost { font-size: 1rem; color: #666; font-weight: 500; margin-bottom: 20px; }
-        .voucher-cost span { color: var(--primary-color); font-weight: 700; font-size: 1.2rem; }
-        .btn-exchange { 
-            background: var(--secondary-color); color: white; border: none; padding: 12px; border-radius: 10px;
+        .voucher-cost { font-size: 1rem; color: var(--text-muted); font-weight: 500; margin-bottom: 20px; }
+        .voucher-cost span { color: var(--primary); font-weight: 700; font-size: 1.2rem; }
+        .btn-exchange {
+            background: var(--navy); color: white; border: none; padding: 12px; border-radius: 10px;
             font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.3s; width: 100%;
         }
         .btn-exchange:hover { background: #002244; }
@@ -75,25 +54,16 @@
 
         /* My Vouchers */
         .my-vouchers-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .my-voucher-item { 
-            background: white; border-radius: 15px; border-left: 6px dashed var(--primary-color);
+        .my-voucher-item {
+            background: var(--card-bg); border-radius: 15px; border-left: 6px dashed var(--primary);
             padding: 20px; box-shadow: var(--card-shadow); position: relative;
             display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
         }
-        .my-voucher-info h4 { color: #333; font-size: 1.1rem; margin-bottom: 5px; font-weight: 700; }
-        .my-voucher-info p { color: #666; font-size: 0.85rem; font-weight: 500; }
+        .my-voucher-info h4 { color: var(--text-main); font-size: 1.1rem; margin-bottom: 5px; font-weight: 700; }
+        .my-voucher-info p { color: var(--text-muted); font-size: 0.85rem; font-weight: 500; }
         .ticket-code { background: #f5f5f5; padding: 6px 12px; border-radius: 8px; font-family: monospace; font-size: 0.9rem; color: #333; letter-spacing: 2px; text-align: center; margin-top: 10px; font-weight: 600; }
         .status-active { position: absolute; top: 15px; right: 15px; background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
         .status-used { position: absolute; top: 15px; right: 15px; background: #ffebee; color: #c62828; padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
-
-        /* Toast Notification */
-        #toast {
-            visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center;
-            border-radius: 10px; padding: 16px; position: fixed; z-index: 1000; left: 50%; transform: translateX(-50%);
-            bottom: 30px; font-size: 0.9rem; font-weight: 500; shadow: 0 4px 15px rgba(0,0,0,0.2);
-            opacity: 0; transition: opacity 0.5s, bottom 0.5s;
-        }
-        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
     </style>
 </head>
 <body>

@@ -4,20 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HUTECH BUS - Mua Thẻ Vé Định Kỳ</title>
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/booking.css}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { display:flex; height:100vh; background: linear-gradient(135deg, #0d1b2a 0%, #003366 100%); }
-        .sidebar { width:260px; background:rgba(0,0,0,0.3); backdrop-filter:blur(10px); color:white; padding:28px 18px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; flex-shrink:0; border-right: 1px solid rgba(255,255,255,0.08); }
-        .sidebar-logo { font-size:1.5rem; font-weight:800; color:white; letter-spacing:-1px; margin-bottom:28px; padding:0 8px; }
-        .sidebar-logo span { color:#ff6b00; }
-        .nav-section-label { font-size:0.65rem; font-weight:700; letter-spacing:1.5px; color:rgba(255,255,255,0.35); text-transform:uppercase; padding:12px 10px 4px; }
-        .nav-link { display:flex; align-items:center; gap:10px; padding:11px 14px; color:rgba(255,255,255,0.65); text-decoration:none; border-radius:10px; font-size:0.9rem; font-weight:500; transition:all 0.2s ease; }
-        .nav-link:hover { background:rgba(255,255,255,0.08); color:white; }
-        .nav-link.active { background:#ff6b00; color:white; box-shadow:0 4px 15px rgba(255,107,0,0.35); }
-        .nav-icon { font-size:1rem; width:20px; text-align:center; }
-        .sidebar-footer { margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); }
-        .page-content { flex:1; overflow-y:auto; }
+        body { overflow: hidden; }
+        .page-content { flex: 1; overflow-y: auto; background: var(--bg); }
         .pass-options {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -25,18 +17,18 @@
             margin-top: 30px;
         }
         .pass-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
             border-radius: 20px;
             padding: 30px;
             text-align: center;
+            box-shadow: var(--card-shadow);
             transition: transform 0.3s ease;
             cursor: pointer;
         }
         .pass-card:hover {
             transform: translateY(-10px);
-            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
         }
         .pass-card h3 {
             font-size: 1.5rem;
@@ -47,7 +39,7 @@
             font-size: 2rem;
             font-weight: 700;
             margin: 20px 0;
-            color: white;
+            color: var(--navy);
         }
         .pass-card .duration {
             color: var(--text-muted);
@@ -62,8 +54,21 @@
             font-weight: 600;
             width: 100%;
             cursor: pointer;
+            transition: background 0.2s;
         }
+        .btn-buy:hover { background: var(--primary-hover); }
+        /* Points info box */
+        .points-info-box {
+            background: rgba(255, 107, 0, 0.05);
+            border: 1px solid var(--primary);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .points-info-box .label { font-weight: 600; color: var(--text-main); }
+        .points-info-box .value { color: var(--primary); font-size: 1.2rem; font-weight: 700; }
     </style>
+
 </head>
 <body>
     <aside class="sidebar">
@@ -86,10 +91,10 @@
 
     <div class="page-content">
         <div class="app-container" style="min-height:100%;">
-            <h1 style="text-align: center; color: white;">Chọn Gói Thẻ Vé Tiết Kiệm</h1>
+            <h1 style="text-align: center; color: var(--navy);">Chọn Gói Thẻ Vé Tiết Kiệm</h1>
             <p style="text-align: center; color: var(--text-muted);">Mua một lần, đi thoải mái cả kỳ học!</p>
             
-            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin: 20px 0; color: white;">
+            <div style="background: rgba(255,107,0,0.05); border: 1px solid rgba(255,107,0,0.2); padding: 20px; border-radius: 12px; margin: 20px 0; color: var(--text-main);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <span style="font-weight: 600;">Điểm H-Point của bạn:</span>
                     <span id="currentPoints" style="color: var(--primary); font-size: 1.2rem; font-weight: 700;" th:text="${hPoints != null ? hPoints : 0}">0</span>
@@ -97,12 +102,12 @@
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <span style="font-size: 0.9rem; flex: 1;">Số điểm muốn sử dụng (1 điểm = 100Đ):</span>
                     <input type="number" id="pointsToUse" value="0" min="0" 
-                           style="width: 100px; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: white; text-align: center;">
+                           style="width: 100px; padding: 8px; border-radius: 8px; border: 1px solid #ddd; background: white; color: var(--text-main); text-align: center;">
                 </div>
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; margin-bottom: 0;">* Điểm sẽ được trừ trực tiếp vào giá vé ngay sau khi xác nhận.</p>
             </div>
 
-            <div style="background: rgba(255,107,0,0.1); border: 1px solid var(--primary); padding: 15px; border-radius: 12px; margin-top: 20px; color: white; display: flex; align-items: center; gap: 15px;">
+            <div style="background: rgba(255,107,0,0.08); border: 1px solid var(--primary); padding: 15px; border-radius: 12px; margin-top: 20px; color: var(--text-main); display: flex; align-items: center; gap: 15px;">
                 <span style="font-size: 1.5rem;">💡</span>
                 <p style="font-size: 0.9rem; margin: 0;">
                     <b>Tin vui:</b> Nếu bạn đang có thẻ còn hạn, gói mới sẽ tự động <b>cộng dồn thời gian</b>. Bạn sẽ không bị mất bất kỳ ngày sử dụng nào của thẻ cũ!

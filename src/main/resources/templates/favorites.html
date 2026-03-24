@@ -5,40 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HUTECHBUS - Yêu thích</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
     <style>
-        :root {
-            --primary-color: #ff6b00;
-            --secondary-color: #003366;
-            --bg-color: #f0f2f5;
-            --card-shadow: 0 4px 25px rgba(0,0,0,0.08);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-
-        body { display: flex; height: 100vh; background-color: var(--bg-color); color: #333; }
-
-        .sidebar { width:260px; background:#003366; color:white; padding:28px 18px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; flex-shrink:0; }
-        .sidebar-logo { font-size:1.5rem; font-weight:800; color:white; letter-spacing:-1px; margin-bottom:28px; padding:0 8px; }
-        .sidebar-logo span { color:#ff6b00; }
-        .nav-section-label { font-size:0.65rem; font-weight:700; letter-spacing:1.5px; color:rgba(255,255,255,0.35); text-transform:uppercase; padding:12px 10px 4px; }
-        .nav-link { display:flex; align-items:center; gap:10px; padding:11px 14px; color:rgba(255,255,255,0.65); text-decoration:none; border-radius:10px; font-size:0.9rem; font-weight:500; transition:all 0.2s ease; }
-        .nav-link:hover { background:rgba(255,255,255,0.08); color:white; }
-        .nav-link.active { background:#ff6b00; color:white; box-shadow:0 4px 15px rgba(255,107,0,0.35); }
-        .nav-icon { font-size:1rem; width:20px; text-align:center; }
-        .sidebar-footer { margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); }
-
-        /* Main Content Styling */
-        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        
+        body { overflow: hidden; }
+        .main-content { overflow-y: auto; }
         .fav-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        .fav-card { background: white; padding: 25px; border-radius: 20px; box-shadow: var(--card-shadow); display: flex; justify-content: space-between; align-items: center; }
-        
-        .route-info h4 { font-size: 1.1rem; color: var(--secondary-color); }
-        .route-info p { font-size: 0.9rem; color: #888; margin-top: 5px; }
-        
+        .fav-card { background: var(--card-bg); padding: 25px; border-radius: 20px; box-shadow: var(--card-shadow); display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s; }
+        .fav-card:hover { transform: translateY(-2px); }
+        .route-info h4 { font-size: 1.1rem; color: var(--navy); }
+        .route-info p { font-size: 0.9rem; color: var(--text-muted); margin-top: 5px; }
         .fav-icon { color: #ff4d4d; font-size: 1.5rem; cursor: pointer; }
-
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 1.6rem; font-weight: 700; color: var(--navy); }
     </style>
 </head>
 <body>

@@ -7,75 +7,37 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root { --primary-color: #ff6b00; --secondary-color: #003366; --bg-color: #f0f2f5; }
-        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
-        body { display:flex; height:100vh; background:#f0f2f5; }
-        .sidebar { width:260px; background:#003366; color:white; padding:28px 18px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; flex-shrink:0; }
-        .sidebar-logo { font-size:1.5rem; font-weight:800; color:white; letter-spacing:-1px; margin-bottom:28px; padding:0 8px; }
-        .sidebar-logo span { color:#ff6b00; }
-        .nav-section-label { font-size:0.65rem; font-weight:700; letter-spacing:1.5px; color:rgba(255,255,255,0.35); text-transform:uppercase; padding:12px 10px 4px; }
-        .nav-link { display:flex; align-items:center; gap:10px; padding:11px 14px; color:rgba(255,255,255,0.65); text-decoration:none; border-radius:10px; font-size:0.9rem; font-weight:500; transition:all 0.2s ease; }
-        .nav-link:hover { background:rgba(255,255,255,0.08); color:white; }
-        .nav-link.active { background:#ff6b00; color:white; box-shadow:0 4px 15px rgba(255,107,0,0.35); }
-        .nav-icon { font-size:1rem; width:20px; text-align:center; }
-        .sidebar-footer { margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); }
+        body { overflow: hidden; }
         .main-content { flex:1; display:flex; flex-direction:column; }
-        .header { background:white; padding:15px 30px; display:flex; justify-content:space-between; align-items:center; z-index: 5; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
-        .map-layout { display:flex; flex:1; }
-        .search-panel { width:420px; background:white; padding:25px; overflow-y:auto; box-shadow: 2px 0 15px rgba(0,0,0,0.03); z-index: 2; }
+        .header { background: var(--card-bg); padding:15px 30px; display:flex; justify-content:space-between; align-items:center; z-index:5; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+        .header h3 { font-size: 1.1rem; font-weight: 700; color: var(--navy); }
+        .map-layout { display:flex; flex:1; overflow: hidden; }
+        .search-panel { width:420px; background: var(--card-bg); padding:25px; overflow-y:auto; box-shadow: 2px 0 15px rgba(0,0,0,0.03); z-index: 2; }
         .search-panel::-webkit-scrollbar { width: 6px; }
         .search-panel::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
         #map { flex:1; z-index: 1; }
-        
-        .route-card { 
-            padding: 20px; 
-            border: 1px solid transparent; 
-            border-radius: 16px; 
-            margin-bottom: 20px; 
-            cursor: pointer; 
-            background: white;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            position: relative;
+        .route-card {
+            padding: 20px; border: 1px solid transparent; border-radius: 16px; margin-bottom: 20px;
+            cursor: pointer; background: var(--card-bg); box-shadow: var(--card-shadow);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative;
         }
-        .route-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-            border-color: rgba(255,107,0,0.3);
-        }
-        .route-title { font-size: 1.1rem; color: var(--secondary-color); margin-bottom: 5px; }
-        .route-desc { font-size: 0.85rem; color: #666; line-height: 1.4; }
-        
+        .route-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); border-color: rgba(255,107,0,0.3); }
+        .route-title { font-size: 1.1rem; color: var(--navy); margin-bottom: 5px; }
+        .route-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
         .action-btn {
-            padding: 10px 22px; 
-            background: linear-gradient(135deg, var(--primary-color), #ff8c00); 
-            color: white; 
-            border: none; 
-            border-radius: 10px; 
-            font-weight: 600; 
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 10px rgba(255, 107, 0, 0.25);
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            padding: 10px 22px; background: linear-gradient(135deg, var(--primary), #ff8c00);
+            color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
+            cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(255, 107, 0, 0.25);
+            display: flex; align-items: center; gap: 6px;
         }
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(255, 107, 0, 0.35);
-        }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 107, 0, 0.35); }
         .hpoint-badge {
-            display: flex; align-items: center; gap: 5px; 
-            padding: 8px 14px; 
-            background: rgba(255, 107, 0, 0.08); 
-            color: var(--primary-color); 
-            border-radius: 10px; 
-            font-size: 0.85rem; 
-            font-weight: 700;
-            border: 1px solid rgba(255, 107, 0, 0.2);
+            display: flex; align-items: center; gap: 5px; padding: 8px 14px;
+            background: rgba(255, 107, 0, 0.08); color: var(--primary); border-radius: 10px;
+            font-size: 0.85rem; font-weight: 700; border: 1px solid rgba(255, 107, 0, 0.2);
         }
     </style>
 </head>
