@@ -249,8 +249,14 @@
                 <div class="text-left mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Chọn lộ trình chạy</label>
                     <select id="routeSelect"
-                        class="w-full border-gray-300 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 bg-gray-50 border outline-none">
+                        class="w-full border-gray-300 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 bg-gray-50 border outline-none mb-3">
                         <option value="">Đang tải danh sách tuyến...</option>
+                    </select>
+
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Chọn xe bus</label>
+                    <select id="vehicleSelect"
+                        class="w-full border-gray-300 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 bg-gray-50 border outline-none">
+                        <option value="">-- Vui lòng chọn tuyến trước --</option>
                     </select>
                 </div>
 
@@ -400,6 +406,7 @@
         const noTripView = document.getElementById('noTripView');
         const activeTripView = document.getElementById('activeTripView');
         const routeSelect = document.getElementById('routeSelect');
+        const vehicleSelect = document.getElementById('vehicleSelect');
         const seatContainer = document.getElementById('seatContainer');
         const toastEl = document.getElementById('toast');
         const totalLockedText = document.getElementById('totalLockedText');
@@ -459,6 +466,35 @@
                 if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
             }
         }
+
+        async function loadVehicles(routeId) {
+            if (!routeId) {
+                vehicleSelect.innerHTML = '<option value="">-- Vui lòng chọn tuyến trước --</option>';
+                return;
+            }
+            try {
+                const res = await fetch(`/api/driver/trips/vehicles/${routeId}`);
+                const vehicles = await res.json();
+                vehicleSelect.innerHTML = '';
+                if (vehicles.length === 0) {
+                    vehicleSelect.innerHTML = '<option value="">Cảnh báo: Không có xe cho tuyến này!</option>';
+                } else {
+                    vehicles.forEach(v => {
+                        const opt = document.createElement('option');
+                        opt.value = v.id;
+                        opt.textContent = `${v.licensePlate} (${v.capacity} chỗ)`;
+                        vehicleSelect.appendChild(opt);
+                    });
+                }
+            } catch (error) {
+                console.error("Load vehicles error:", error);
+                showToast('Không thể tải danh sách xe', true);
+            }
+        }
+
+        routeSelect.addEventListener('change', () => {
+            loadVehicles(routeSelect.value);
+        });
 
         async function refreshTripData() {
             if (!currentTripId) return;
@@ -525,16 +561,24 @@
                 });
 
                 // Aisle logic
-                if (totalSeatsGlobal === 45) {
-                    if (i < 41) {
-                        const colIndex = (i - 1) % 4; // 0, 1, 2, 3
-                        if (colIndex === 0) seat.style.gridColumn = '1';
-                        if (colIndex === 1) seat.style.gridColumn = '2';
-                        if (colIndex === 2) seat.style.gridColumn = '4';
-                        if (colIndex === 3) seat.style.gridColumn = '5';
+                if (totalSeatsGlobal >= 16) {
+                    const seatsPerRow = 4;
+                    const posInRow = (i - 1) % seatsPerRow;
+                    if (i <= (Math.floor(totalSeatsGlobal / seatsPerRow) * seatsPerRow)) {
+                        if (posInRow === 0) seat.style.gridColumn = '1';
+                        if (posInRow === 1) seat.style.gridColumn = '2';
+                        if (posInRow === 2) seat.style.gridColumn = '4';
+                        if (posInRow === 3) seat.style.gridColumn = '5';
                     } else {
-                        const pos = i - 40;
-                        seat.classList.add(`last-row-seat-${pos}`);
+                        // Special handling for the last partial row if not 45
+                        const remaining = totalSeatsGlobal % seatsPerRow;
+                        if (totalSeatsGlobal === 45 && i > 40) {
+                             const pos = i - 40;
+                             seat.classList.add(`last-row-seat-${pos}`);
+                        } else {
+                             // Just spread them
+                             seat.style.gridColumn = (i % 5) || 5;
+                        }
                     }
                 }
 
@@ -648,7 +692,10 @@
                 const res = await fetch('/api/driver/trips/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ routeId })
+                    body: JSON.stringify({ 
+                        routeId,
+                        vehicleId: vehicleSelect.value 
+                    })
                 });
 
                 if (res.ok) {

@@ -37,7 +37,7 @@ public class RoleBasedSuccessHandler implements AuthenticationSuccessHandler {
             if ("ROLE_ADMIN".equals(role)) {
                 redirectUrl = "/admin/dashboard";
                 break;
-            } else if ("ROLE_MANAGER".equals(role)) {
+            } else if ("ROLE_MANAGER".equals(role) || "ROLE_DRIVER".equals(role)) {
                 redirectUrl = "/driver/app";
                 break;
             }
