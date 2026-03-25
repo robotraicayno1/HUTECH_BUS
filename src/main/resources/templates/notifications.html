@@ -11,12 +11,29 @@
         .main-content { overflow-y: auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .header h1 { font-size: 1.6rem; font-weight: 700; color: var(--navy); }
-        .noti-list { display: flex; flex-direction: column; gap: 15px; }
-        .noti-card { background: var(--card-bg); padding: 20px; border-radius: 15px; box-shadow: var(--card-shadow); border-left: 4px solid var(--border-color); }
+        .noti-list { display: flex; flex-direction: column; gap: 12px; }
+        .noti-card {
+            background: var(--card-bg); padding: 18px 22px; border-radius: 14px;
+            box-shadow: var(--card-shadow); border-left: 4px solid var(--border-color);
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .noti-card:hover { transform: translateX(4px); box-shadow: 0 6px 20px rgba(0,0,0,0.09); }
         .noti-card.unread { border-left-color: var(--primary); background: #fffcf9; }
-        .noti-card h4 { font-size: 1rem; color: var(--navy); margin-bottom: 5px; }
-        .noti-card p { font-size: 0.9rem; color: var(--text-muted); }
-        .noti-time { font-size: 0.75rem; color: #aaa; margin-top: 10px; text-align: right; }
+        .noti-card h4 { font-size: 1rem; color: var(--navy); margin-bottom: 5px; font-weight: 700; }
+        .noti-card p { font-size: 0.88rem; color: var(--text-muted); margin: 0; }
+        .noti-time { font-size: 0.75rem; color: #bbb; margin-top: 8px; text-align: right; }
+        .badge-unread {
+            display: inline-block; background: var(--primary); color: white;
+            font-size: 0.7rem; font-weight: 700; padding: 2px 8px;
+            border-radius: 10px; margin-left: 8px; vertical-align: middle;
+        }
+        .btn-read-all {
+            background: var(--navy); color: white; border: none; padding: 8px 18px;
+            border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        .btn-read-all:hover { background: #002244; }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-state .icon { font-size: 3.5rem; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -41,39 +58,52 @@
         <div class="header">
             <div>
                 <p style="color: #888; font-size: 0.9rem;">Cập nhật tin tức và thông báo mới nhất</p>
-                <h1>Thông báo</h1>
+                <h1>
+                    Thông báo
+                    <span class="badge-unread" th:if="${unreadCount > 0}" th:text="${unreadCount} + ' mới'"></span>
+                </h1>
+            </div>
+            <button class="btn-read-all" th:if="${unreadCount > 0}" onclick="markAllRead()">Đánh dấu tất cả đã đọc</button>
+        </div>
+
+        <div class="noti-list" th:if="${!notifications.isEmpty()}">
+            <div th:each="n : ${notifications}"
+                 th:id="'noti-' + ${n.id}"
+                 th:class="${n.read} ? 'noti-card' : 'noti-card unread'"
+                 th:attr="data-id=${n.id}"
+                 onclick="markRead(this)">
+                <h4 th:text="${n.title}">Tiêu đề</h4>
+                <p th:text="${n.message}">Nội dung thông báo...</p>
+                <div class="noti-time"
+                     th:text="${n.createdAt != null ? #temporals.format(n.createdAt, 'HH:mm - dd/MM/yyyy') : ''}">
+                </div>
             </div>
         </div>
 
-        <div class="noti-list">
-            <div class="noti-card unread">
-                <h4>🎉 Cập nhật Tuyến xe bus 167 mới!</h4>
-                <p>Hệ thống vừa cập nhật tuyến 167 kết nối ĐH Nông Lâm và Khu CNC. Các bạn có thể tra cứu ngay trên app.</p>
-                <div class="noti-time">Vừa xong</div>
-            </div>
-            <div class="noti-card">
-                <h4>⚠️ Thay đổi lộ trình Tuyến 01</h4>
-                <p>Do sự kiện tại cơ sở A, Tuyến 01 sẽ dời trạm đón sang đường Ung Văn Khiêm trong ngày 21/03.</p>
-                <div class="noti-time">2 giờ trước</div>
-            </div>
-            <div class="noti-card">
-                <h4>✅ Đăng ký thẻ thành công</h4>
-                <p>Chào mừng bạn đến với HUTECHBUS. Thẻ ảo của bạn đã sẵn sàng để check-in.</p>
-                <div class="noti-time">Hôm qua</div>
-            </div>
+        <!-- Empty state -->
+        <div class="empty-state" th:if="${notifications.isEmpty()}">
+            <div class="icon">🔔</div>
+            <h3 style="color: var(--navy);">Chưa có thông báo nào</h3>
+            <p>Khi chuyến xe của bạn kết thúc, thông báo sẽ hiện tại đây.</p>
         </div>
     </div>
+
     <script>
-        function toggleAdminMenu() {
-            var menu = document.getElementById('adminMenu');
-            var icon = document.getElementById('adminToggleIcon');
-            if (menu.style.display === 'none') {
-                menu.style.display = 'flex';
-                icon.innerText = '▲';
-            } else {
-                menu.style.display = 'none';
-                icon.innerText = '▼';
+        function markRead(card) {
+            const id = card.getAttribute('data-id');
+            if (card.classList.contains('unread')) {
+                card.classList.remove('unread');
+                fetch('/api/notifications/' + id + '/read', { method: 'POST' });
             }
+        }
+
+        function markAllRead() {
+            fetch('/api/notifications/read-all', { method: 'POST' })
+            .then(() => {
+                document.querySelectorAll('.noti-card.unread').forEach(c => c.classList.remove('unread'));
+                document.querySelector('.btn-read-all')?.remove();
+                document.querySelector('.badge-unread')?.remove();
+            });
         }
     </script>
 </body>

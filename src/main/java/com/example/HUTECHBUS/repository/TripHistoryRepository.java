@@ -11,16 +11,13 @@ import java.util.List;
  */
 public interface TripHistoryRepository extends MongoRepository<TripHistory, String> {
 
-    /**
-     * Lấy lịch sử chuyến đi của một người dùng, sắp xếp từ mới nhất đến cũ nhất.
-     *
-     * @param userId ID của người dùng
-     * @return Danh sách các chuyến đi theo thứ tự giảm dần của ngày
-     */
     List<TripHistory> findByUserIdOrderByTripDateDesc(String userId);
 
-    /**
-     * Lấy tất cả lịch sử chuyến đi từ một thời điểm nhất định (cho báo cáo).
-     */
     List<TripHistory> findByTripDateAfter(LocalDateTime date);
+
+    List<TripHistory> findByRouteId(String routeId);
+
+    List<TripHistory> findByTripDateBetween(LocalDateTime start, LocalDateTime end);
+
+    long countByRouteId(String routeId);
 }

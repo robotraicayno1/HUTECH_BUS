@@ -75,12 +75,5 @@ public class LoginController {
         return "index";
     }
 
-    /** Hiển thị trang thông báo hệ thống */
-    @GetMapping("/notifications")
-    public String notifications(Model model, Principal principal) {
-        if (principal != null) {
-            model.addAttribute("username", principal.getName());
-        }
-        return "notifications";
-    }
 }
+

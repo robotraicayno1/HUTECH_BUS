@@ -33,10 +33,10 @@ public class DataSeeder {
 
     @Bean
     CommandLineRunner initDatabase(UserRepository userRepository,
-                                   StopRepository stopRepository,
-                                   RouteRepository routeRepository,
-                                   PasswordEncoder passwordEncoder,
-                                   VoucherRepository voucherRepository) {
+            StopRepository stopRepository,
+            RouteRepository routeRepository,
+            PasswordEncoder passwordEncoder,
+            VoucherRepository voucherRepository) {
         return args -> {
             // Xóa toàn bộ dữ liệu cũ để re-seed sạch
             userRepository.deleteAll();
@@ -179,11 +179,10 @@ public class DataSeeder {
             route167.setName("Tuyến 167: ĐH Nông Lâm - HUTECH Campus E - Di An");
             route167.setDescription("Lộ trình: HUTECH E → Metro → ĐH Nông Lâm → UEL → Dĩ An → Linh Trung");
             route167.setStopIds(List.of(
-                "STOP_E", "STOP_METRO_CNC", "STOP_NONGLAM", "STOP_UEL",
-                "STOP_DAOSONTAY", "STOP_GODIAN", "STOP_HOANMY",
-                "STOP_HCDIAN", "STOP_NTPHUONG", "STOP_XUANHIEP",
-                "STOP_LINHTRUNG", "STOP_LOTTE", "STOP_COCA", "STOP_E"
-            ));
+                    "STOP_E", "STOP_METRO_CNC", "STOP_NONGLAM", "STOP_UEL",
+                    "STOP_DAOSONTAY", "STOP_GODIAN", "STOP_HOANMY",
+                    "STOP_HCDIAN", "STOP_NTPHUONG", "STOP_XUANHIEP",
+                    "STOP_LINHTRUNG", "STOP_LOTTE", "STOP_COCA", "STOP_E"));
             route167.setColorCode("#003366");
             routeRepository.save(route167);
 
@@ -208,7 +207,7 @@ public class DataSeeder {
             userRepository.save(driver);
 
             // 10 Sinh viên mẫu (211101 → 211110, mật khẩu: 123456)
-            int[] samplePoints = {500, 350, 200, 150, 100, 80, 60, 40, 20, 10};
+            int[] samplePoints = { 500, 350, 200, 150, 100, 80, 60, 40, 20, 10 };
             for (int i = 1; i <= 10; i++) {
                 User student = new User();
                 student.setUsername(String.format("2111%02d", i));
@@ -242,7 +241,7 @@ public class DataSeeder {
             discount10kAny.setPointCost(800);
             discount10kAny.setDiscountAmount(10000);
             voucherRepository.save(discount10kAny);
-            
+
             Voucher discount20kMonthly = new Voucher();
             discount20kMonthly.setName("Voucher Giảm 20.000đ (Vé Tháng)");
             discount20kMonthly.setTicketType("DISCOUNT");
@@ -278,7 +277,6 @@ public class DataSeeder {
             cashback30k.setPointCost(2000);
             cashback30k.setDiscountAmount(30000);
             voucherRepository.save(cashback30k);
-
 
         };
     }

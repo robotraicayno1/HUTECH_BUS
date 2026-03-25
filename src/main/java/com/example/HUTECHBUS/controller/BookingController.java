@@ -6,6 +6,7 @@ import com.example.HUTECHBUS.model.Ticket;
 import com.example.HUTECHBUS.model.User;
 import com.example.HUTECHBUS.repository.ActiveTripMongoRepository;
 import com.example.HUTECHBUS.repository.TicketPassRepository;
+import com.example.HUTECHBUS.repository.PassPackageRepository;
 import com.example.HUTECHBUS.repository.TicketMongoRepository;
 import com.example.HUTECHBUS.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,9 @@ public class BookingController {
 
     @Autowired
     private TicketMongoRepository ticketMongoRepository;
+
+    @Autowired
+    private PassPackageRepository passPackageRepository;
 
     @GetMapping("/booking")
     public String showBookingPage() {
@@ -98,9 +102,18 @@ public class BookingController {
     @GetMapping("/buy-pass")
     public String showBuyPassPage(Model model, Principal principal) {
         if (principal != null) {
-            userRepository.findByUsername(principal.getName()).ifPresent(user -> {
+            String username = principal.getName();
+            userRepository.findByUsername(username).ifPresent(user -> {
                 model.addAttribute("hPoints", user.getHPoints());
             });
+            // Load all available Pass Packages for purchase
+            java.util.List<com.example.HUTECHBUS.model.PassPackage> packages = passPackageRepository.findAll();
+            model.addAttribute("packages", packages);
+
+            // Load user's passes assigned/created by admin
+            List<TicketPass> myPasses = ticketPassRepository.findByUserId(username);
+            model.addAttribute("myPasses", myPasses);
+            model.addAttribute("hasActive", myPasses.stream().anyMatch(p -> "ACTIVE".equals(p.getStatus())));
         }
         return "buy-pass";
     }
@@ -143,6 +156,60 @@ public class BookingController {
     public ResponseEntity<?> getActiveTripForRoute(@PathVariable String routeId) {
         Optional<ActiveTrip> trip = activeTripRepository.findByRouteIdAndStatus(routeId, "RUNNING").stream().findFirst();
         return trip.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Tạm khóa ghế khi user đang chọn (trước khi xác nhận đặt chỗ).
+     * Ghế sẽ hiện là "Đang giữ" trên Driver App.
+     */
+    @PostMapping("/api/bookings/pre-lock")
+    @ResponseBody
+    public ResponseEntity<?> preLockSeat(@RequestBody Map<String, Object> payload) {
+        String routeId = (String) payload.get("routeId");
+        @SuppressWarnings("unchecked")
+        List<Integer> seatNumbers = (List<Integer>) payload.get("seatNumbers");
+
+        Optional<ActiveTrip> tripOpt = activeTripRepository.findByRouteIdAndStatus(routeId, "RUNNING").stream().findFirst();
+        if (tripOpt.isEmpty()) return ResponseEntity.ok(Map.of("ok", false));
+
+        ActiveTrip trip = tripOpt.get();
+        List<Integer> locked = trip.getLockedSeats();
+        for (Integer seat : seatNumbers) {
+            if (!locked.contains(seat)) locked.add(seat);
+        }
+        trip.setLockedSeats(locked);
+        activeTripRepository.save(trip);
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    /**
+     * Mở khóa ghế tạm thời khi user bỏ chọn ghế đó.
+     */
+    @PostMapping("/api/bookings/pre-unlock")
+    @ResponseBody
+    public ResponseEntity<?> preUnlockSeat(@RequestBody Map<String, Object> payload) {
+        String routeId = (String) payload.get("routeId");
+        @SuppressWarnings("unchecked")
+        List<Integer> seatNumbers = (List<Integer>) payload.get("seatNumbers");
+
+        Optional<ActiveTrip> tripOpt = activeTripRepository.findByRouteIdAndStatus(routeId, "RUNNING").stream().findFirst();
+        if (tripOpt.isEmpty()) return ResponseEntity.ok(Map.of("ok", false));
+
+        ActiveTrip trip = tripOpt.get();
+        // Chỉ mở khóa nếu chưa có passenger thật ở ghế đó
+        List<Integer> locked = trip.getLockedSeats();
+        List<Integer> pPaid = trip.getOnlinePaidSeats();
+        List<Integer> pUnpaid = trip.getOnlineUnpaidSeats();
+        List<Integer> tPaid = trip.getTransferPaidSeats();
+        for (Integer seat : seatNumbers) {
+            // Không mở nếu đã được đặt chính thức
+            if (!pPaid.contains(seat) && !pUnpaid.contains(seat) && !tPaid.contains(seat)) {
+                locked.remove(seat);
+            }
+        }
+        trip.setLockedSeats(locked);
+        activeTripRepository.save(trip);
+        return ResponseEntity.ok(Map.of("ok", true));
     }
 
     /**
@@ -216,6 +283,7 @@ public class BookingController {
         newTicket.setSeats(seatNumbers);
         newTicket.setTotalAmount("PASS".equals(paymentType) ? 0 : (seatNumbers.size() * 10000L)); // vé lẻ 10k
         newTicket.setBookingTime(LocalDateTime.now());
+        newTicket.setStatus("BOOKED");
         
         ticketMongoRepository.save(newTicket);
         

@@ -1,11 +1,15 @@
 package com.example.HUTECHBUS.controller;
 
 import com.example.HUTECHBUS.model.ActiveTrip;
+import com.example.HUTECHBUS.model.Notification;
 import com.example.HUTECHBUS.model.Route;
+import com.example.HUTECHBUS.model.Ticket;
 import com.example.HUTECHBUS.model.TripHistory;
 import com.example.HUTECHBUS.model.User;
 import com.example.HUTECHBUS.repository.ActiveTripMongoRepository;
+import com.example.HUTECHBUS.repository.NotificationRepository;
 import com.example.HUTECHBUS.repository.RouteRepository;
+import com.example.HUTECHBUS.repository.TicketMongoRepository;
 import com.example.HUTECHBUS.repository.TripHistoryRepository;
 import com.example.HUTECHBUS.repository.TicketPassRepository;
 import com.example.HUTECHBUS.repository.UserRepository;
@@ -43,6 +47,12 @@ public class DriverApiController {
 
     @Autowired
     private TicketPassRepository ticketPassRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private TicketMongoRepository ticketMongoRepository;
 
     @GetMapping("/active")
     public ResponseEntity<?> getActiveTrip(Principal principal) {
@@ -89,19 +99,49 @@ public class DriverApiController {
         trip.setStatus("COMPLETED");
         activeTripRepository.save(trip);
 
-        // --- GHI LẠI LỊCH SỬ CHO TẤT CẢ SINH VIÊN TRÊN XE ---
+        // --- GHI LẠI LỊCH SỬ VÀ GỬI THÔNG BÁO CHO TẤT CẢ SINH VIÊN TRÊN XE ---
         Map<String, List<Integer>> passengers = trip.getPassengerSeats();
         if (passengers != null) {
             passengers.forEach((username, seats) -> {
                 Optional<User> userOpt = userRepository.findByUsername(username);
                 if (userOpt.isPresent()) {
+                    User student = userOpt.get();
+                    // Ghi lịch sử
                     TripHistory history = new TripHistory();
-                    history.setUserId(userOpt.get().getId());
+                    history.setUserId(student.getId());
                     history.setRouteId(trip.getRouteId());
                     history.setRouteName(trip.getRouteName());
                     history.setTripDate(LocalDateTime.now());
                     history.setStatus("COMPLETED");
                     tripHistoryRepository.save(history);
+
+                    // Đánh dấu Ticket của sinh viên là COMPLETED
+                    // Dùng findAll theo username để bắt cả vé cũ có status = null
+                    List<Ticket> userTickets = ticketMongoRepository.findByUsernameOrderByBookingTimeDesc(username);
+                    for (Ticket t : userTickets) {
+                        // Bỏ qua vé đã hoàn thành rồi
+                        if ("COMPLETED".equals(t.getStatus())) continue;
+                        // Chỉ đánh dấu vé cùng tuyến xe + ghế trùng khớp
+                        boolean sameRoute = trip.getRouteName() != null && trip.getRouteName().equals(t.getRouteName());
+                        boolean seatMatch = t.getSeats() != null && t.getSeats().stream().anyMatch(seats::contains);
+                        if (sameRoute && seatMatch) {
+                            t.setStatus("COMPLETED");
+                            t.setTripId(tripId);
+                            t.setCompletedAt(LocalDateTime.now());
+                            ticketMongoRepository.save(t);
+                        }
+                    }
+
+                    // Gửi thông báo
+                    Notification noti = new Notification();
+                    noti.setUserId(username);
+                    noti.setTitle("✅ Chuyến xe đã hoàn thành!");
+                    noti.setMessage("Chuyến xe " + trip.getRouteName() + " của bạn đã kết thúc lúc "
+                            + LocalDateTime.now().getHour() + "h"
+                            + String.format("%02d", LocalDateTime.now().getMinute())
+                            + ". Ghế: " + seats + ". Cảm ơn bạn đã sử dụng HUTECHBUS! (+10 H-Point)");
+                    noti.setType("TRIP_COMPLETE");
+                    notificationRepository.save(noti);
                 }
             });
         }
@@ -183,73 +223,29 @@ public class DriverApiController {
         User student = userOpt.get();
 
         Map<String, List<Integer>> pSeats = trip.getPassengerSeats();
-        List<Integer> locked = trip.getLockedSeats();
         List<Integer> checkedIn = trip.getCheckedInSeats();
 
-        if (pSeats.containsKey(username)) {
-            List<Integer> userSeats = pSeats.get(username);
-            boolean newCheckIn = false;
-            for (Integer s : userSeats) {
-                if (!checkedIn.contains(s)) {
-                    checkedIn.add(s);
-                    newCheckIn = true;
-                }
-            }
-            if (!newCheckIn) {
-                return ResponseEntity.badRequest().body("Sinh vien nay da check-in tat ca cac ghe.");
-            }
-            trip.setCheckedInSeats(checkedIn);
-            ActiveTrip saved = activeTripRepository.save(trip);
-
-            // Cộng 10 điểm thưởng cho mỗi lần đi xe (Check-in thành công)
-            student.setHPoints(student.getHPoints() + 10);
-            userRepository.save(student);
-
-            // Kiểm tra thẻ vé
-            String passStatus = "NONE";
-            String passType = "NONE";
-            if (student.getActivePassId() != null) {
-                Optional<TicketPass> passOpt = ticketPassRepository.findById(student.getActivePassId());
-                if (passOpt.isPresent()) {
-                    TicketPass pass = passOpt.get();
-                    passStatus = "ACTIVE".equals(pass.getStatus()) ? "VALID" : "EXPIRED";
-                    passType = pass.getType();
-                }
-            }
-
-            return ResponseEntity.ok(Map.of(
-                    "message", "Xac nhan len xe thanh cong (+10 H-Point).",
-                    "studentName", student.getFullName(),
-                    "seatNumber", userSeats.get(0),
-                    "passStatus", passStatus,
-                    "passType", passType,
-                    "trip", saved));
+        if (!pSeats.containsKey(username)) {
+            return ResponseEntity.badRequest().body("Sinh vien nay chua dat ve cho chuyen xe nay!");
         }
 
-        int assignedSeat = -1;
-        for (int i = 1; i <= trip.getTotalSeats(); i++) {
-            if (!locked.contains(i)) {
-                assignedSeat = i;
-                break;
+        List<Integer> userSeats = pSeats.get(username);
+        boolean newCheckIn = false;
+        for (Integer s : userSeats) {
+            if (!checkedIn.contains(s)) {
+                checkedIn.add(s);
+                newCheckIn = true;
             }
         }
-
-        if (assignedSeat == -1) {
-            return ResponseEntity.badRequest().body("Xe het ghe trong.");
-        }
-
-        List<Integer> userSeats = pSeats.getOrDefault(username, new ArrayList<>());
-        userSeats.add(assignedSeat);
-        pSeats.put(username, userSeats);
-        locked.add(assignedSeat);
-        checkedIn.add(assignedSeat); // Tu dong check-in
         
-        trip.setPassengerSeats(pSeats);
-        trip.setLockedSeats(locked);
+        if (!newCheckIn) {
+            return ResponseEntity.badRequest().body("Sinh vien nay da check-in tat ca cac ghe.");
+        }
+        
         trip.setCheckedInSeats(checkedIn);
         ActiveTrip saved = activeTripRepository.save(trip);
 
-        // Cộng 10 điểm thưởng cho mỗi lần đi xe (Check-in thành công - Walk-in)
+        // Cộng 10 điểm thưởng cho mỗi lần đi xe (Check-in thành công)
         student.setHPoints(student.getHPoints() + 10);
         userRepository.save(student);
 
@@ -266,9 +262,9 @@ public class DriverApiController {
         }
 
         return ResponseEntity.ok(Map.of(
-                "message", "Da xep ghe va Check-in thanh cong (+10 H-Point).",
+                "message", "Xac nhan len xe thanh cong (+10 H-Point).",
                 "studentName", student.getFullName(),
-                "seatNumber", assignedSeat,
+                "seatNumber", userSeats.get(0),
                 "passStatus", passStatus,
                 "passType", passType,
                 "trip", saved));

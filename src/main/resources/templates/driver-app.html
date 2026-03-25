@@ -463,7 +463,8 @@
         async function refreshTripData() {
             if (!currentTripId) return;
             try {
-                const response = await fetch('/api/driver/trips/active');
+                // Thêm timestamp và no-store để chống browser cache
+                const response = await fetch('/api/driver/trips/active?t=' + new Date().getTime(), { cache: 'no-store' });
                 if (response.status === 200) {
                     const trip = await response.json();
                     // Chỉ cập nhật các biến toàn cục và render lại grid, không làm phiền người dùng
@@ -562,7 +563,7 @@
 
             // Set up auto-refresh if not already
             if (!refreshInterval) {
-                refreshInterval = setInterval(refreshTripData, 30000); // 30 seconds
+                refreshInterval = setInterval(refreshTripData, 2000); // 2 seconds cho realtime
             }
         }
 

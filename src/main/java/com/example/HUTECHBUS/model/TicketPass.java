@@ -28,6 +28,9 @@ public class TicketPass {
     /** Ngày hết hạn thẻ */
     private LocalDateTime expiryDate;
 
+    /** Giá tiền của thẻ (VNĐ) */
+    private long price;
+
     /** Trạng thái thẻ: ACTIVE, EXPIRED */
     private String status = "ACTIVE";
 }

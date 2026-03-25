@@ -23,8 +23,18 @@ public class Ticket {
     private String pickupPoint;     // Điểm đón
     private String paymentMethod;   // CASH, PASS, TRANSFER
     
-    private List<Integer> seats;    // Các ghế đã đặt
+    private List<Integer> seats;   // Các ghế đã đặt
     private long totalAmount;       // Tổng tiền (có thể là 0đ nếu xài thẻ)
     
     private LocalDateTime bookingTime; // Thời điểm đặt giữ chỗ
+
+    /** Trạng thái vé: BOOKED, COMPLETED, CANCELLED */
+    private String status = "BOOKED";
+
+    /** ID của chuyến xe thực tế đã hoàn thành (nếu có) */
+    private String tripId;
+
+    /** Thời điểm chuyến xe hoàn thành */
+    private LocalDateTime completedAt;
 }
+

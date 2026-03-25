@@ -39,8 +39,10 @@ async function fetchActiveTrip() {
             activeTrip = await response.json();
             document.getElementById('route-name-display').textContent = activeTrip.routeName;
             initBusLayout(activeTrip);
+            
+            // Bắt đầu tự động cập nhật ghế mỗi 3 giây
+            setInterval(syncActiveTrip, 3000);
         } else {
-            // Nếu không có chuyến đang chạy, vẫn cho hiện sơ đồ trống để test hoặc thông báo
             console.warn('Không tìm thấy chuyến xe đang chạy.');
             initBusLayout(null);
         }
@@ -48,6 +50,52 @@ async function fetchActiveTrip() {
         console.error('Lỗi khi tải thông tin chuyến xe:', error);
         initBusLayout(null);
     }
+}
+
+// Hàm đồng bộ ngầm trạng thái ghế
+async function syncActiveTrip() {
+    try {
+        const response = await fetch(`/api/bookings/active/${currentRouteId}?t=` + new Date().getTime(), { cache: 'no-store' });
+        if (response.ok) {
+            activeTrip = await response.json();
+            syncSeats(activeTrip);
+        }
+    } catch (error) {
+        console.warn('Lỗi khi đồng bộ ghế ngầm:', error);
+    }
+}
+
+// Hàm chỉ cập nhật trạng thái UI của ghế (không vẽ lại toàn bộ DOM)
+function syncSeats(tripData) {
+    if (!tripData) return;
+    
+    let bookedSeatsList = [
+        ...(tripData.lockedSeats || []),
+        ...(tripData.transferPaidSeats || []),
+        ...(tripData.onlinePaidSeats || []),
+        ...(tripData.onlineUnpaidSeats || []),
+        ...(tripData.checkedInSeats || [])
+    ];
+
+    const seats = document.querySelectorAll('.seat');
+    seats.forEach(seat => {
+        const seatId = parseInt(seat.dataset.id);
+        
+        // Bỏ qua ghế nếu người dùng hiện tại đang chọn nó
+        if (selectedSeats.includes(seatId) || selectedSeats.includes(String(seatId))) return;
+
+        if (bookedSeatsList.includes(seatId)) {
+            // Ghế đã bị người khác khóa
+            if (!seat.classList.contains('booked')) {
+                seat.classList.add('booked');
+            }
+        } else {
+            // Ghế được mở khóa
+            if (seat.classList.contains('booked')) {
+                seat.classList.remove('booked');
+            }
+        }
+    });
 }
 
 async function fetchRouteStops() {
@@ -135,24 +183,48 @@ function createSeatElement(container, seatId, bookedSeatsList) {
 // Hàm xử lý khi user click vào 1 ghế trống
 function handleSeatClick(e) {
     const seat = e.target;
-    const seatId = seat.dataset.id;
+    // Không cho phép click vào ghế đã bị khóa bởi người khác
+    if (seat.classList.contains('booked')) {
+        return;
+    }
+
+    const seatId = parseInt(seat.dataset.id);
 
     if (seat.classList.contains('selected')) {
         // Hủy chọn
         seat.classList.remove('selected');
-        selectedSeats = selectedSeats.filter(id => id !== seatId);
+        selectedSeats = selectedSeats.filter(id => id !== String(seatId) && id !== seatId);
+        updateSummary();
+
+        // Gọi API mở khóa tạm thời trên Driver
+        if (activeTrip) {
+            fetch('/api/bookings/pre-unlock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ routeId: currentRouteId, seatNumbers: [seatId] })
+            }).catch(() => {});
+        }
     } else {
-        // Chọn mới (giới hạn tối đa 5 vé mỗi lần mua để chống spam)
+        // Chọn mới (giới hạn tối đa 5 vé mỗi lần mua)
         if (selectedSeats.length >= 5) {
             alert('Bạn chỉ được chọn tối đa 5 ghế trong một lần đặt!');
             return;
         }
         seat.classList.add('selected');
         selectedSeats.push(seatId);
-    }
+        updateSummary();
 
-    updateSummary();
+        // Gọi API khóa tạm thời trên Driver
+        if (activeTrip) {
+            fetch('/api/bookings/pre-lock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ routeId: currentRouteId, seatNumbers: [seatId] })
+            }).catch(() => {});
+        }
+    }
 }
+
 
 // Hàm cập nhật khu vực hiển thị Tóm tắt và tính tiền
 function updateSummary() {
@@ -212,6 +284,19 @@ function startCountdown(durationInSeconds) {
         if (--timer < 0) {
             clearInterval(countdownInterval);
             display.textContent = "00:00";
+            
+            // Mở khóa các ghế đang giữ trên server
+            if (activeTrip && selectedSeats.length > 0) {
+                fetch('/api/bookings/pre-unlock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ routeId: currentRouteId, seatNumbers: selectedSeats.map(id => parseInt(id)) })
+                }).catch(() => {});
+                
+                selectedSeats = [];
+                updateSummary();
+            }
+
             alert('Thời gian giữ chỗ đã hết! Vui lòng refresh và đặt lại.');
             // Vô hiệu hóa toàn bộ tương tác
             document.querySelectorAll('.seat').forEach(s => s.style.pointerEvents = 'none');
@@ -306,5 +391,14 @@ window.addEventListener('load', function() {
         alert('🎉 Thanh toán thành công! Ghế của bạn đã được xác nhận.');
     } else if (status === 'error') {
         alert('❌ Thanh toán không thành công. Vui lòng thử lại.');
+    }
+});
+
+// Xử lý mở khóa ghế khi người dùng rời khỏi trang hoặc reload
+window.addEventListener('beforeunload', function (e) {
+    if (activeTrip && selectedSeats.length > 0) {
+        // Sử dụng sendBeacon để đảm bảo API được gọi ngay cả khi tab đóng
+        const payload = JSON.stringify({ routeId: currentRouteId, seatNumbers: selectedSeats.map(id => parseInt(id)) });
+        navigator.sendBeacon('/api/bookings/pre-unlock', new Blob([payload], { type: 'application/json' }));
     }
 });

@@ -34,7 +34,7 @@ public class PointController {
         if (user == null) return "redirect:/login";
 
         List<Voucher> availableVouchers = voucherRepository.findAll();
-        List<UserVoucher> myVouchers = userVoucherRepository.findByUserId(user.getId());
+        List<UserVoucher> myVouchers = userVoucherRepository.findByUserId(user.getUsername());
 
         model.addAttribute("username", principal.getName());
         model.addAttribute("hPoints", user.getHPoints());
@@ -75,7 +75,7 @@ public class PointController {
 
         // Tạo UserVoucher
         UserVoucher userVoucher = new UserVoucher();
-        userVoucher.setUserId(user.getId());
+        userVoucher.setUserId(user.getUsername());
         userVoucher.setVoucherId(voucher.getId());
         userVoucher.setVoucherName(voucher.getName());
         userVoucher.setTicketType(voucher.getTicketType());
