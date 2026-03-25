@@ -146,7 +146,15 @@ public class TripController {
         trip.setStatus("COMPLETED");
 
         tripHistoryRepository.save(trip);
+
+        // Cộng 10 H-Points cho user
+        int earned = 10;
+        user.setHPoints(user.getHPoints() + earned);
+        userRepository.save(user);
+        
         res.put("success", true);
+        res.put("earnedPoints", earned);
+        res.put("totalPoints", user.getHPoints());
         return res;
     }
 }

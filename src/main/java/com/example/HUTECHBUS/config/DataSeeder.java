@@ -6,6 +6,8 @@ import com.example.HUTECHBUS.model.User;
 import com.example.HUTECHBUS.repository.RouteRepository;
 import com.example.HUTECHBUS.repository.StopRepository;
 import com.example.HUTECHBUS.repository.UserRepository;
+import com.example.HUTECHBUS.repository.VoucherRepository;
+import com.example.HUTECHBUS.model.Voucher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -29,19 +31,18 @@ import java.util.Set;
 @Configuration
 public class DataSeeder {
 
-    @Autowired
-    private org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
-
     @Bean
     CommandLineRunner initDatabase(UserRepository userRepository,
                                    StopRepository stopRepository,
                                    RouteRepository routeRepository,
-                                   PasswordEncoder passwordEncoder) {
+                                   PasswordEncoder passwordEncoder,
+                                   VoucherRepository voucherRepository) {
         return args -> {
             // Xóa toàn bộ dữ liệu cũ để re-seed sạch
             userRepository.deleteAll();
             stopRepository.deleteAll();
             routeRepository.deleteAll();
+            voucherRepository.deleteAll();
 
             // ================================
             // CÁC TRẠM DỪNG - CAMPUS HUTECH
@@ -207,14 +208,78 @@ public class DataSeeder {
             userRepository.save(driver);
 
             // 10 Sinh viên mẫu (211101 → 211110, mật khẩu: 123456)
+            int[] samplePoints = {500, 350, 200, 150, 100, 80, 60, 40, 20, 10};
             for (int i = 1; i <= 10; i++) {
                 User student = new User();
-                student.setUsername("21110" + i);
+                student.setUsername(String.format("2111%02d", i));
                 student.setPassword(passwordEncoder.encode("123456"));
                 student.setFullName("Sinh viên HUTECH " + i);
                 student.setRoles(Set.of("STUDENT"));
+                student.setHPoints(samplePoints[i - 1]); // Điểm mẫu để test tính năng đổi điểm
                 userRepository.save(student);
             }
+
+            // ================================
+            // VOUCHERS REDEEMABLE (MIXED PASSES & DISCOUNTS)
+            // ================================
+            Voucher singleTrip = new Voucher();
+            singleTrip.setName("Vé Lẻ 1 Lượt (Miễn phí 1 chuyến)");
+            singleTrip.setTicketType("SINGLE_TRIP");
+            singleTrip.setPointCost(50);
+            singleTrip.setDiscountAmount(0);
+            voucherRepository.save(singleTrip);
+
+            Voucher dailyVoucher = new Voucher();
+            dailyVoucher.setName("Vé 1 Ngày (Miễn phí 24h)");
+            dailyVoucher.setTicketType("DAILY");
+            dailyVoucher.setPointCost(300);
+            dailyVoucher.setDiscountAmount(0);
+            voucherRepository.save(dailyVoucher);
+
+            Voucher discount10kAny = new Voucher();
+            discount10kAny.setName("Voucher Giảm 10.000đ (Áp dụng mọi vé)");
+            discount10kAny.setTicketType("DISCOUNT");
+            discount10kAny.setPointCost(800);
+            discount10kAny.setDiscountAmount(10000);
+            voucherRepository.save(discount10kAny);
+            
+            Voucher discount20kMonthly = new Voucher();
+            discount20kMonthly.setName("Voucher Giảm 20.000đ (Vé Tháng)");
+            discount20kMonthly.setTicketType("DISCOUNT");
+            discount20kMonthly.setPointCost(1500);
+            discount20kMonthly.setDiscountAmount(20000);
+            voucherRepository.save(discount20kMonthly);
+
+            Voucher discount100kYearly = new Voucher();
+            discount100kYearly.setName("Voucher Giảm 100.000đ (Vé Năm)");
+            discount100kYearly.setTicketType("DISCOUNT");
+            discount100kYearly.setPointCost(5000);
+            discount100kYearly.setDiscountAmount(100000);
+            voucherRepository.save(discount100kYearly);
+
+            // CÁC VOUCHER BỔ SUNG YÊU CẦU MỚI
+            Voucher discount5kAny = new Voucher();
+            discount5kAny.setName("Voucher Giảm 5.000đ (Áp dụng mọi vé)");
+            discount5kAny.setTicketType("DISCOUNT");
+            discount5kAny.setPointCost(400);
+            discount5kAny.setDiscountAmount(5000);
+            voucherRepository.save(discount5kAny);
+
+            Voucher discount50kMonthly = new Voucher();
+            discount50kMonthly.setName("Voucher Giảm 50.000đ (Vé Tháng)");
+            discount50kMonthly.setTicketType("DISCOUNT");
+            discount50kMonthly.setPointCost(3500);
+            discount50kMonthly.setDiscountAmount(50000);
+            voucherRepository.save(discount50kMonthly);
+
+            Voucher cashback30k = new Voucher();
+            cashback30k.setName("Voucher Hoàn Tiền 30.000đ (Áp dụng mọi vé)");
+            cashback30k.setTicketType("DISCOUNT");
+            cashback30k.setPointCost(2000);
+            cashback30k.setDiscountAmount(30000);
+            voucherRepository.save(cashback30k);
+
+
         };
     }
 }

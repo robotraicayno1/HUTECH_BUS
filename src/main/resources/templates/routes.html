@@ -5,32 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HUTECHBUS - Tra cứu lộ trình</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root { --primary-color: #ff6b00; --secondary-color: #003366; --bg-color: #f0f2f5; }
-        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
-        body { display:flex; height:100vh; background:#f0f2f5; }
-        .sidebar { width:280px; background:#003366; color:white; padding:35px 25px; display:flex; flex-direction:column; }
-        .sidebar h2 { font-size:1.6rem; margin-bottom:50px; }
-        .nav-link { display:flex; padding:14px 18px; color:rgba(255,255,255,0.7); text-decoration:none; border-radius:12px; margin-bottom:8px; }
-        .nav-link.active { background:#ff6b00; color:white; }
+        body { overflow: hidden; }
         .main-content { flex:1; display:flex; flex-direction:column; }
-        .header { background:white; padding:15px 30px; display:flex; justify-content:space-between; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
-        .map-layout { display:flex; flex:1; }
-        .search-panel { width:380px; background:white; padding:20px; overflow-y:auto; }
-        #map { flex:1; }
-        .route-card { padding:15px; border:1px solid #eee; border-radius:12px; margin-bottom:15px; cursor:pointer; }
+        .header { background: var(--card-bg); padding:15px 30px; display:flex; justify-content:space-between; align-items:center; z-index:5; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+        .header h3 { font-size: 1.1rem; font-weight: 700; color: var(--navy); }
+        .map-layout { display:flex; flex:1; overflow: hidden; }
+        .search-panel { width:420px; background: var(--card-bg); padding:25px; overflow-y:auto; box-shadow: 2px 0 15px rgba(0,0,0,0.03); z-index: 2; }
+        .search-panel::-webkit-scrollbar { width: 6px; }
+        .search-panel::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+        #map { flex:1; z-index: 1; }
+        .route-card {
+            padding: 20px; border: 1px solid transparent; border-radius: 16px; margin-bottom: 20px;
+            cursor: pointer; background: var(--card-bg); box-shadow: var(--card-shadow);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative;
+        }
+        .route-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); border-color: rgba(255,107,0,0.3); }
+        .route-title { font-size: 1.1rem; color: var(--navy); margin-bottom: 5px; }
+        .route-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+        .action-btn {
+            padding: 10px 22px; background: linear-gradient(135deg, var(--primary), #ff8c00);
+            color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
+            cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(255, 107, 0, 0.25);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 107, 0, 0.35); }
+        .hpoint-badge {
+            display: flex; align-items: center; gap: 5px; padding: 8px 14px;
+            background: rgba(255, 107, 0, 0.08); color: var(--primary); border-radius: 10px;
+            font-size: 0.85rem; font-weight: 700; border: 1px solid rgba(255, 107, 0, 0.2);
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h2>HUTECH<span>BUS</span></h2>
-        <a href="/dashboard" class="nav-link">Dashboard</a>
-        <a href="/routes" class="nav-link active">Tra cứu lộ trình</a>
-        <a href="/history" class="nav-link">Lịch sử chuyến đi</a>
-        <a href="/favorites" class="nav-link">Đã lưu / Yêu thích</a>
-        <a href="/notifications" class="nav-link">Thông báo</a>
-    </div>
+    <aside class="sidebar">
+        <div class="sidebar-logo">HUTECH<span>BUS</span></div>
+
+        <div class="nav-section-label">Chính</div>
+        <a href="/dashboard" class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="/routes" class="nav-link active"><span class="nav-icon">🚌</span> Tra cứu &amp; Đặt chỗ</a>
+        <a href="/my-tickets" class="nav-link"><span class="nav-icon">🎫</span> Vé của tôi</a>
+
+        <div class="nav-section-label">Thẻ &amp; Điểm</div>
+        <a href="/buy-pass" class="nav-link"><span class="nav-icon">💳</span> Mua Thẻ Vé Định Kỳ</a>
+        <a href="/points" class="nav-link"><span class="nav-icon">🎯</span> H-Point &amp; Voucher</a>
+
+        <div class="nav-section-label">Thông tin</div>
+        <a href="/history" class="nav-link"><span class="nav-icon">📋</span> Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link"><span class="nav-icon">❤️</span> Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link"><span class="nav-icon">🔔</span> Thông báo</a>
+
+
+
+        <div class="sidebar-footer">
+            <a href="#" class="nav-link"><span class="nav-icon">⚙️</span> Cài đặt tài khoản</a>
+        </div>
+    </aside>
 
     <div class="main-content">
         <div class="header">
@@ -44,23 +78,28 @@
                     <div th:each="route : ${routes}" class="route-card" 
                          th:attr="data-id=${route.id}" 
                          onclick="handleSelectRoute(this.getAttribute('data-id'))">
-                        <h4 th:text="${route.name}">Route Name</h4>
-                        <p th:text="${route.description}" style="font-size:0.8rem; color: #666;">Desc</p>
-                        <div style="display:flex; align-items:center; margin-top:8px;">
-                            <div th:style="|width:10px; height:10px; border-radius:50%; background:${route.colorCode != null ? route.colorCode : '#ccc'}; margin-right:5px;|"></div>
-                            <span style="font-size:0.75rem; color:#999;">Tuyến xe bus</span>
+                        <h4 class="route-title" th:text="${route.name}">Route Name</h4>
+                        <p class="route-desc" th:text="${route.description}">Desc</p>
+                        
+                        <div style="display:flex; align-items:center; margin-top:10px; margin-bottom:15px;">
+                            <div th:style="|width:12px; height:12px; border-radius:50%; background:${route.colorCode != null ? route.colorCode : '#ccc'}; margin-right:8px; box-shadow: 0 0 5px ${route.colorCode != null ? route.colorCode : '#ccc'}|"></div>
+                            <span style="font-size:0.8rem; font-weight:500; color:#888;"><i class="fa-solid fa-bus-simple" style="margin-right:4px;"></i> Tuyến xe bus nội khu</span>
                         </div>
-                        <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
-                            <div class="fav-btn" th:attr="data-id=${route.id}" onclick="toggleFavorite(this.getAttribute('data-id'), this)" 
-                                 style="font-size: 1.4rem; cursor: pointer; transition: transform 0.2s;"
-                                 onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
-                                 <!-- Initial state could be set via user data if passed, or just default to empty heart -->
-                                 🤍
+                        
+                        <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; border-top: 1px solid #f0f0f0; padding-top: 15px;">
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <div class="fav-btn" th:attr="data-id=${route.id}" onclick="toggleFavorite(this.getAttribute('data-id'), this); event.stopPropagation();" 
+                                     style="font-size: 1.5rem; cursor: pointer; transition: transform 0.2s; display:flex; align-items:center; justify-content:center; width: 36px; height: 36px; border-radius: 50%; background: #f8f9fa;"
+                                     onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
+                                     <i class="fa-regular fa-heart" style="color:#aaa;"></i>
+                                </div>
+                                <button class="action-btn" th:attr="data-id=${route.id}" onclick="recordTrip(this.getAttribute('data-id')); event.stopPropagation();">
+                                    <i class="fa-solid fa-ticket"></i> Đi ngay
+                                </button>
                             </div>
-                            <button class="action-btn" th:attr="data-id=${route.id}" onclick="recordTrip(this.getAttribute('data-id'))"
-                                    style="padding: 8px 15px; background: var(--primary-color); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                                Đi ngay
-                            </button>
+                            <div class="hpoint-badge">
+                                <i class="fa-solid fa-gift"></i> +10 Point
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -120,13 +159,19 @@
             }
         }
         async function recordTrip(id) {
+            // DUCTAI: Record trip and give points
             try {
                 const res = await fetch(`/api/trips/record/${id}`, { method: 'POST' });
                 const data = await res.json();
-                if (data.success) {
-                    alert('Đã ghi nhận chuyến đi thành công!');
+                if (data.success && data.earnedPoints) {
+                    console.log(`Earned ${data.earnedPoints} points!`);
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error("Lỗi ghi nhận chuyến đi:", err); 
+            }
+            
+            // MINHTAI: Then redirect to booking
+            window.location.href = `/booking?routeId=${id}`;
         }
 
         async function toggleFavorite(id, el) {
@@ -134,10 +179,33 @@
                 const res = await fetch(`/api/favorites/toggle/${id}`, { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                    el.innerText = data.isFavorite ? '❤️' : '🤍';
-                    if (data.isFavorite) alert('Đã thêm vào mục yêu thích!');
+                    el.innerHTML = data.isFavorite ? '<i class="fa-solid fa-heart" style="color:#ff4d4d; font-size: 1.5rem;"></i>' : '<i class="fa-regular fa-heart" style="color:#aaa; font-size: 1.5rem;"></i>';
+                    
+                    if (data.isFavorite) {
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'bottom-end',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true,
+                        });
+                        Toast.fire({ icon: 'success', title: 'Đã lưu vào yêu thích ❤️' });
+                    }
                 }
             } catch (err) { console.error(err); }
+        }
+
+        // Dropdown toggle logic
+        function toggleAdminMenu() {
+            var menu = document.getElementById('adminMenu');
+            var icon = document.getElementById('adminToggleIcon');
+            if (menu.style.display === 'none') {
+                menu.style.display = 'flex';
+                icon.innerText = '▲';
+            } else {
+                menu.style.display = 'none';
+                icon.innerText = '▼';
+            }
         }
     </script>
 </body>

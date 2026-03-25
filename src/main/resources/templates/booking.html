@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECHBUS - Đặt chỗ &amp; Thanh toán</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <style>
+        body { overflow: hidden; }
+
+        /* ---- Seat Layout ---- */
+        .booking-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .bus-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            padding: 24px;
+        }
+
+        .bus-card h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .steering-label {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 8px;
+            background: #f4f6fb;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .seats-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 36px 1fr 1fr;
+            gap: 8px;
+        }
+
+        .seat {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid #e5e7eb;
+            background: white;
+            color: #374151;
+            transition: all 0.15s ease;
+        }
+        .seat:hover { border-color: var(--primary); transform: scale(1.05); }
+        .seat.selected  { background: var(--primary); border-color: var(--primary); color: white; }
+        .seat.booked    { background: #f3f4f6; border-color: #e5e7eb; color: #d1d5db; cursor: not-allowed; }
+        .seat.aisle     { background: transparent; border-color: transparent; cursor: default; }
+
+        .seat-legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+            flex-wrap: wrap;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-muted); }
+        .legend-dot  { width: 14px; height: 14px; border-radius: 4px; border: 2px solid #e5e7eb; }
+        .legend-dot.selected { background: var(--primary); border-color: var(--primary); }
+        .legend-dot.booked   { background: #f3f4f6; }
+
+        /* ---- Summary Panel ---- */
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            padding: 24px;
+            position: sticky;
+            top: 0;
+        }
+
+        .summary-card h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid #f9f9f9;
+            gap: 12px;
+        }
+        .detail-row:last-of-type { border-bottom: none; }
+        .detail-row > span { font-size: 0.83rem; color: var(--text-muted); white-space: nowrap; }
+        .detail-row > strong { font-size: 0.88rem; font-weight: 600; color: var(--navy); text-align: right; }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 2px solid #f0f0f0;
+        }
+        .total-row span { font-size: 0.9rem; font-weight: 600; color: var(--navy); }
+        .total-row strong { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
+
+        .payment-methods { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+        .payment-method-label {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 12px; border-radius: 8px; border: 2px solid #e5e7eb;
+            font-size: 0.85rem; font-weight: 500; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .payment-method-label:has(input:checked) {
+            border-color: var(--primary);
+            background: rgba(255, 107, 0, 0.06);
+            color: var(--primary);
+        }
+        .payment-method-label input { accent-color: var(--primary); }
+
+        .btn-book {
+            width: 100%; background: var(--primary); color: white;
+            border: none; padding: 13px; border-radius: 10px;
+            font-size: 0.95rem; font-weight: 700; cursor: pointer;
+            margin-top: 20px; transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(255, 107, 0, 0.3);
+        }
+        .btn-book:hover { background: var(--primary-hover); box-shadow: 0 6px 18px rgba(255, 107, 0, 0.4); }
+        .btn-book:disabled { background: #d1d5db; box-shadow: none; cursor: not-allowed; }
+
+        .pass-hint {
+            font-size: 0.75rem; color: var(--text-muted);
+            margin-top: 12px; text-align: center;
+        }
+        .pass-hint a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+        .countdown-bar {
+            background: linear-gradient(90deg, var(--primary), #ff8c38);
+            border-radius: var(--radius);
+            padding: 10px 18px;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .countdown-timer-val { font-size: 1.1rem; font-weight: 800; }
+
+        select#pickup-point-select {
+            font-family: inherit; font-size: 0.85rem;
+            padding: 4px 8px; border-radius: 6px;
+            border: 1px solid #e5e7eb; background: white; color: var(--navy);
+            outline: none; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">HUTECH<span>BUS</span></div>
+        <div class="nav-section-label">Chính</div>
+        <a href="/dashboard" class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="/routes" class="nav-link active"><span class="nav-icon">🚌</span> Tra cứu &amp; Đặt chỗ</a>
+        <a href="/my-tickets" class="nav-link"><span class="nav-icon">🎫</span> Vé của tôi</a>
+        <div class="nav-section-label">Thẻ &amp; Điểm</div>
+        <a href="/buy-pass" class="nav-link"><span class="nav-icon">💳</span> Mua Thẻ Vé Định Kỳ</a>
+        <a href="/points" class="nav-link"><span class="nav-icon">🎯</span> H-Point &amp; Voucher</a>
+        <div class="nav-section-label">Thông tin</div>
+        <a href="/history" class="nav-link"><span class="nav-icon">📋</span> Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link"><span class="nav-icon">❤️</span> Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link"><span class="nav-icon">🔔</span> Thông báo</a>
+        <div class="sidebar-footer">
+            <a href="#" class="nav-link"><span class="nav-icon">⚙️</span> Cài đặt tài khoản</a>
+        </div>
+    </aside>
+
+    <!-- ============ MAIN CONTENT ============ -->
+    <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-left">
+                <p><a href="/routes" style="color:var(--primary);text-decoration:none;font-size:0.85rem;">← Quay lại danh sách tuyến</a></p>
+                <h1>Chọn ghế &amp; Đặt chỗ</h1>
+            </div>
+        </div>
+
+        <!-- Countdown Bar -->
+        <div class="countdown-bar">
+            <span>⏱️ Thời gian giữ chỗ của bạn</span>
+            <span class="countdown-timer-val" id="countdown-timer">30:00</span>
+        </div>
+
+        <!-- Booking Grid -->
+        <div class="booking-grid">
+            <!-- Seat Map -->
+            <div class="bus-card">
+                <h2>🚌 Sơ đồ ghế xe</h2>
+                <div class="steering-label">▲ Đầu xe (Tài xế)</div>
+                <div class="seats-container" id="seats-container">
+                    <!-- JS renders seats here -->
+                </div>
+                <div class="seat-legend">
+                    <div class="legend-item"><div class="legend-dot"></div> Trống</div>
+                    <div class="legend-item"><div class="legend-dot selected"></div> Đang chọn</div>
+                    <div class="legend-item"><div class="legend-dot booked"></div> Đã đặt</div>
+                </div>
+            </div>
+
+            <!-- Summary Panel -->
+            <div class="summary-card">
+                <h2>Chi Tiết Đặt Chỗ</h2>
+
+                <div class="detail-row">
+                    <span>Tuyến:</span>
+                    <strong id="route-name-display">...</strong>
+                </div>
+                <div class="detail-row">
+                    <span>Điểm đón:</span>
+                    <select id="pickup-point-select"></select>
+                </div>
+                <div class="detail-row">
+                    <span>Giờ chạy:</span>
+                    <strong>07:30 AM</strong>
+                </div>
+                <div class="detail-row">
+                    <span>Ghế đã chọn:</span>
+                    <strong id="selected-seats-list">Chưa chọn</strong>
+                </div>
+
+                <div style="margin-top:16px;">
+                    <p style="font-size:0.83rem;color:var(--text-muted);font-weight:600;margin-bottom:10px;">Phương thức thanh toán:</p>
+                    <div class="payment-methods">
+                        <label class="payment-method-label">
+                            <input type="radio" name="paymentMethod" value="TRANSFER" checked> 💳 Chuyển khoản
+                        </label>
+                        <label class="payment-method-label">
+                            <input type="radio" name="paymentMethod" value="CASH"> 💵 Tiền mặt
+                        </label>
+                    </div>
+                </div>
+
+                <div class="total-row">
+                    <span>Tổng tiền:</span>
+                    <strong id="total-price">0 VNĐ</strong>
+                </div>
+
+                <button class="btn-book" id="btn-checkout" disabled>Tiến Hành Đặt Chỗ</button>
+                <p class="pass-hint">💡 Có thẻ tháng? <a href="/buy-pass">Mua tại đây</a> để được miễn phí 0đ.</p>
+            </div>
+        </div>
+    </main>
+
+    <script th:src="@{/js/booking.js}"></script>
+</body>
+</html>

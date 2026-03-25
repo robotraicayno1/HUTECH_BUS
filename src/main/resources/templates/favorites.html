@@ -5,55 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HUTECHBUS - Yêu thích</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
     <style>
-        :root {
-            --primary-color: #ff6b00;
-            --secondary-color: #003366;
-            --bg-color: #f0f2f5;
-            --card-shadow: 0 4px 25px rgba(0,0,0,0.08);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-
-        body { display: flex; height: 100vh; background-color: var(--bg-color); color: #333; }
-
-        /* Sidebar Styling */
-        .sidebar { width: 280px; background: var(--secondary-color); color: white; padding: 35px 25px; display: flex; flex-direction: column; }
-        .sidebar h2 { font-size: 1.6rem; margin-bottom: 50px; font-weight: 800; letter-spacing: -1px; }
-        .sidebar h2 span { color: var(--primary-color); }
-        .nav-link { 
-            display: flex; align-items: center; padding: 14px 18px; color: rgba(255,255,255,0.7); 
-            text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: all 0.3s ease;
-            font-weight: 500;
-        }
-        .nav-link:hover, .nav-link.active { background: rgba(255,107,0,1); color: white; box-shadow: 0 4px 15px rgba(255,107,0,0.3); }
-
-        /* Main Content Styling */
-        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        
+        body { overflow: hidden; }
+        .main-content { overflow-y: auto; }
         .fav-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        .fav-card { background: white; padding: 25px; border-radius: 20px; box-shadow: var(--card-shadow); display: flex; justify-content: space-between; align-items: center; }
-        
-        .route-info h4 { font-size: 1.1rem; color: var(--secondary-color); }
-        .route-info p { font-size: 0.9rem; color: #888; margin-top: 5px; }
-        
+        .fav-card { background: var(--card-bg); padding: 25px; border-radius: 20px; box-shadow: var(--card-shadow); display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s; }
+        .fav-card:hover { transform: translateY(-2px); }
+        .route-info h4 { font-size: 1.1rem; color: var(--navy); }
+        .route-info p { font-size: 0.9rem; color: var(--text-muted); margin-top: 5px; }
         .fav-icon { color: #ff4d4d; font-size: 1.5rem; cursor: pointer; }
-
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 1.6rem; font-weight: 700; color: var(--navy); }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h2>HUTECH<span>BUS</span></h2>
-        <a href="/dashboard" class="nav-link">Dashboard</a>
-        <a href="/routes" class="nav-link">Tra cứu lộ trình</a>
-        <a href="/history" class="nav-link">Lịch sử chuyến đi</a>
-        <a href="/favorites" class="nav-link active">Đã lưu / Yêu thích</a>
-        <a href="/notifications" class="nav-link">Thông báo</a>
-        
-        <div style="flex: 1;"></div>
-        <a href="#" class="nav-link">Cài đặt tài khoản</a>
-    </div>
+    <aside class="sidebar">
+        <div class="sidebar-logo">HUTECH<span>BUS</span></div>
+        <div class="nav-section-label">Chính</div>
+        <a href="/dashboard" class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="/routes" class="nav-link"><span class="nav-icon">🚌</span> Tra cứu &amp; Đặt chỗ</a>
+        <a href="/my-tickets" class="nav-link"><span class="nav-icon">🎫</span> Vé của tôi</a>
+        <div class="nav-section-label">Thẻ &amp; Điểm</div>
+        <a href="/buy-pass" class="nav-link"><span class="nav-icon">💳</span> Mua Thẻ Vé Định Kỳ</a>
+        <a href="/points" class="nav-link"><span class="nav-icon">🎯</span> H-Point &amp; Voucher</a>
+        <div class="nav-section-label">Thông tin</div>
+        <a href="/history" class="nav-link"><span class="nav-icon">📋</span> Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link active"><span class="nav-icon">❤️</span> Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link"><span class="nav-icon">🔔</span> Thông báo</a>
+
+        <div class="sidebar-footer"><a href="#" class="nav-link"><span class="nav-icon">⚙️</span> Cài đặt tài khoản</a></div>
+    </aside>
 
     <div class="main-content">
         <div class="header">
@@ -76,5 +58,18 @@
             </div>
         </div>
     </div>
+    <script>
+        function toggleAdminMenu() {
+            var menu = document.getElementById('adminMenu');
+            var icon = document.getElementById('adminToggleIcon');
+            if (menu.style.display === 'none') {
+                menu.style.display = 'flex';
+                icon.innerText = '▲';
+            } else {
+                menu.style.display = 'none';
+                icon.innerText = '▼';
+            }
+        }
+    </script>
 </body>
 </html>

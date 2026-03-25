@@ -221,32 +221,7 @@
         </div>
 
         <form th:action="@{/login}" method="post">
-            <div class="form-group">
-                <label>Loại tài khoản *</label>
-                <div class="role-selector">
-                    <label class="role-option">
-                        <input type="radio" name="role" value="STAFF" checked>
-                        <span class="role-box">
-                            <span class="radio-circle"></span>
-                            CB-GV-NV
-                        </span>
-                    </label>
-                    <label class="role-option">
-                        <input type="radio" name="role" value="STUDENT">
-                        <span class="role-box">
-                            <span class="radio-circle"></span>
-                            Sinh Viên - Đại học
-                        </span>
-                    </label>
-                    <label class="role-option">
-                        <input type="radio" name="role" value="CYU">
-                        <span class="role-box">
-                            <span class="radio-circle"></span>
-                            CY CERGY PARIS UNIVERSITÉ - CYU
-                        </span>
-                    </label>
-                </div>
-            </div>
+            <input type="hidden" name="role" value="STUDENT">
 
             <div class="form-group">
                 <label for="username">Mã số sinh viên / Giảng viên</label>
