@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HUTECHBUS - Đăng nhập</title>
+    <title>HUTECHBUS - Đăng ký</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -27,12 +27,13 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            overflow: hidden;
+            overflow: auto; /* Allow scroll for taller form */
+            padding: 20px;
         }
 
         .login-container {
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
             padding: 40px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -91,7 +92,7 @@
             box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.1);
         }
 
-        .btn-login {
+        .btn-register {
             width: 100%;
             padding: 14px;
             background: var(--primary-color);
@@ -105,7 +106,7 @@
             margin-top: 10px;
         }
 
-        .btn-login:hover {
+        .btn-register:hover {
             background: #e65c00;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(255, 107, 0, 0.3);
@@ -211,32 +212,53 @@
         <div class="logo">
             <h1>HUTECH<span>BUS</span></h1>
             <p style="color: #888; font-size: 0.9rem;">Hệ thống xe bus nội bộ HUTECH</p>
+            <h2 style="color: var(--secondary-color); font-size: 1.3rem; margin-top: 20px;">Tạo Tài Khoản Mới</h2>
         </div>
 
-        <div th:if="${param.error}" style="background: #ffebee; color: #c62828; padding: 12px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem; border-left: 4px solid #c62828;">
-            Tên đăng nhập hoặc mật khẩu không chính xác.
-        </div>
-        <div th:if="${param.logout}" style="background: #e8f5e9; color: #2e7d32; padding: 12px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem; border-left: 4px solid #2e7d32;">
-            Bạn đã đăng xuất thành công.
+        <div th:if="${error}" style="background: #ffebee; color: #c62828; padding: 12px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem; border-left: 4px solid #c62828;">
+            <span th:text="${error}">Có lỗi xảy ra</span>
         </div>
 
-        <form th:action="@{/login}" method="post">
-            <input type="hidden" name="role" value="STUDENT">
+        <form th:action="@{/register}" method="post">
+            <div class="form-group">
+                <label>Bạn là: *</label>
+                <div class="role-selector">
+                    <label class="role-option">
+                        <input type="radio" name="role" value="STUDENT" checked>
+                        <span class="role-box">
+                            <span class="radio-circle"></span>
+                            Sinh Viên - Đại học
+                        </span>
+                    </label>
+                    <label class="role-option">
+                        <input type="radio" name="role" value="CYU">
+                        <span class="role-box">
+                            <span class="radio-circle"></span>
+                            CY CERGY PARIS UNIVERSITÉ - CYU
+                        </span>
+                    </label>
+                </div>
+            </div>
 
             <div class="form-group">
-                <label for="username">Mã số sinh viên / Giảng viên</label>
+                <label for="fullName">Họ và tên *</label>
+                <input type="text" id="fullName" name="fullName" placeholder="Nhập họ và tên đầy đủ" required>
+            </div>
+
+            <div class="form-group">
+                <label for="username">Mã số sinh viên / CB-GV-NV *</label>
                 <input type="text" id="username" name="username" placeholder="Nhập mã số của bạn" required>
             </div>
+            
             <div class="form-group">
-                <label for="password">Mật khẩu</label>
+                <label for="password">Mật khẩu *</label>
                 <input type="password" id="password" name="password" placeholder="••••••••" required>
             </div>
             
-            <button type="submit" class="btn-login">Đăng nhập</button>
+            <button type="submit" class="btn-register">Đăng ký</button>
             
             <div class="footer-links">
-                <p>Chưa có tài khoản? <a th:href="@{/register}">Đăng ký ngay</a></p>
-                <p style="margin-top: 10px;"><a href="#">Quên mật khẩu?</a></p>
+                <p>Đã có tài khoản? <a th:href="@{/login}">Đăng nhập ngay</a></p>
             </div>
         </form>
     </div>

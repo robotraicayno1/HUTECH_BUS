@@ -34,6 +34,7 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+<<<<<<< HEAD
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -41,6 +42,9 @@ public class SecurityConfig {
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
+=======
+
+>>>>>>> bed3500435ebea4b61c6dcf60486cd4f095c2c85
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -48,24 +52,40 @@ public class SecurityConfig {
             .authenticationProvider(authenticationProvider())
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+<<<<<<< HEAD
                 // Tài nguyên công khai
                 .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
                 // API
                 .requestMatchers("/api/**").permitAll()
                 // Trang Admin: chỉ ADMIN
+=======
+                .requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
+>>>>>>> bed3500435ebea4b61c6dcf60486cd4f095c2c85
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                // Trang Tài xế: chỉ MANAGER
-                .requestMatchers("/driver/**").hasRole("MANAGER")
-                // Trang người dùng: STUDENT và ADMIN
+                // Trang Tài xế: chỉ MANAGER hoặc DRIVER
+                .requestMatchers("/driver/**").hasAnyRole("MANAGER", "DRIVER")
+                // Trang người dùng: STUDENT, ADMIN và STAFF
                 .requestMatchers("/dashboard", "/booking", "/ticket", "/routes",
                                  "/history", "/favorites", "/notifications",
-                                 "/points", "/my-tickets", "/buy-pass").hasAnyRole("STUDENT", "ADMIN")
+                                 "/points", "/my-tickets", "/buy-pass").hasAnyRole("STUDENT", "ADMIN", "STAFF")
                 // Mọi request còn lại phải đăng nhập
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
+<<<<<<< HEAD
                 .successHandler(roleBasedSuccessHandler)  // Chuyển hướng theo role
+=======
+                .successHandler((request, response, authentication) -> {
+                    boolean isAdmin = authentication.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                    if (isAdmin) {
+                        response.sendRedirect("/admin/dashboard");
+                    } else {
+                        response.sendRedirect("/dashboard");
+                    }
+                })
+>>>>>>> bed3500435ebea4b61c6dcf60486cd4f095c2c85
                 .permitAll()
             )
             .logout(logout -> logout

@@ -38,10 +38,6 @@
             display: flex; align-items: center; gap: 5px; padding: 8px 14px;
             background: rgba(255, 107, 0, 0.08); color: var(--primary); border-radius: 10px;
             font-size: 0.85rem; font-weight: 700; border: 1px solid rgba(255, 107, 0, 0.2);
-        }
-    </style>
-</head>
-<body>
     <aside class="sidebar">
         <div class="sidebar-logo">HUTECH<span>BUS</span></div>
 
@@ -65,10 +61,6 @@
             <a href="#" class="nav-link"><span class="nav-icon">⚙️</span> Cài đặt tài khoản</a>
         </div>
     </aside>
-
-    <div class="main-content">
-        <div class="header">
-            <h3>Tra cứu lộ trình</h3>
             <div>Chào, <span th:text="${username != null ? username : 'HT-User'}">User</span></div>
         </div>
         <div class="map-layout">
