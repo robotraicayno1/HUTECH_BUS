@@ -11,8 +11,11 @@ import com.example.HUTECHBUS.model.User;
 import com.example.HUTECHBUS.repository.UserRepository;
 import com.example.HUTECHBUS.model.TicketPass;
 import com.example.HUTECHBUS.repository.TicketPassRepository;
+import com.example.HUTECHBUS.model.PassPackage;
+import com.example.HUTECHBUS.repository.PassPackageRepository;
 import java.security.Principal;
 import java.util.Map;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/api/passes")
@@ -25,22 +28,31 @@ public class PassController {
     private TicketPassRepository ticketPassRepository;
 
     @Autowired
+    private PassPackageRepository passPackageRepository;
+
+    @Autowired
     private VnPayService vnPayService;
 
     /**
-     * Khởi tạo quá trình mua thẻ vé định kỳ.
-     * Tạo URL thanh toán VNPAY hoặc kích hoạt trực tiếp nếu đủ điểm.
+     * Khởi tạo quá trình mua thẻ vé định kỳ từ danh sách PassPackage.
+     * Tạo URL thanh toán VNPAY hoặc kích hoạt trực tiếp nếu trả toàn bộ bằng H-Point.
      */
     @PostMapping("/buy")
     @ResponseBody
     public ResponseEntity<?> buyPass(@RequestBody Map<String, Object> payload, 
                                    HttpServletRequest request,
                                    Principal principal) throws Exception {
-        // Kiểm tra đăng nhập
         if (principal == null) return ResponseEntity.status(401).body("Yêu cầu đăng nhập.");
         
-        String type = (String) payload.get("type"); // WEEK, MONTH, YEAR
-        if (type == null) return ResponseEntity.badRequest().body("Loại thẻ không hợp lệ.");
+        String packageId = (String) payload.get("packageId");
+        if (packageId == null || packageId.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Vui lòng chọn một gói cước.");
+        }
+
+        PassPackage passPackage = passPackageRepository.findById(packageId).orElse(null);
+        if (passPackage == null) {
+            return ResponseEntity.badRequest().body("Gói cước không tồn tại.");
+        }
 
         Integer pointsToUse = (Integer) payload.getOrDefault("pointsToUse", 0);
         if (pointsToUse < 0) return ResponseEntity.badRequest().body("Số điểm không hợp lệ.");
@@ -52,32 +64,21 @@ public class PassController {
             return ResponseEntity.badRequest().body("Bạn không đủ điểm H-Point.");
         }
 
-        // Xác định giá tiền dựa trên loại thẻ
-        long originalPrice;
-        switch (type.toUpperCase()) {
-            case "WEEK": originalPrice = 50000; break;
-            case "MONTH": originalPrice = 180000; break;
-            case "YEAR": originalPrice = 1500000; break;
-            default: return ResponseEntity.badRequest().body("Loại thẻ không hỗ trợ.");
-        }
-
-        // 1 điểm = 100 VNĐ
+        long originalPrice = passPackage.getPrice();
         long discount = pointsToUse * 100L;
         long finalPrice = originalPrice - discount;
         if (finalPrice < 0) finalPrice = 0;
 
         String username = principal.getName();
 
-        // Trường hợp 1: Thanh toán toàn bộ bằng điểm (0 VNĐ) -> Kích hoạt luôn
+        // 1. Thanh toán toàn bộ bằng H-Point -> Kích hoạt luôn
         if (finalPrice <= 0) {
             user.setHPoints(user.getHPoints() - pointsToUse);
             userRepository.save(user);
 
             java.time.LocalDateTime now = java.time.LocalDateTime.now();
-            // Dùng mảng để tránh lỗi "effectively final" trong lambda
             java.time.LocalDateTime[] startDateRef = { now };
 
-            // Xử lý gia hạn nối tiếp nếu đang có thẻ còn hạn
             if (user.getActivePassId() != null) {
                 ticketPassRepository.findById(user.getActivePassId()).ifPresent(oldPass -> {
                     if ("ACTIVE".equals(oldPass.getStatus()) && oldPass.getExpiryDate().isAfter(now)) {
@@ -86,18 +87,12 @@ public class PassController {
                 });
             }
             java.time.LocalDateTime startDate = startDateRef[0];
-
-            java.time.LocalDateTime expiryDate;
-            switch (type.toUpperCase()) {
-                case "WEEK": expiryDate = startDate.plusDays(7); break;
-                case "MONTH": expiryDate = startDate.plusMonths(1); break;
-                case "YEAR": expiryDate = startDate.plusYears(1); break;
-                default: expiryDate = startDate.plusMonths(1);
-            }
+            java.time.LocalDateTime expiryDate = startDate.plusDays(passPackage.getDurationDays());
 
             TicketPass newPass = new TicketPass();
             newPass.setUserId(username);
-            newPass.setType(type.toUpperCase());
+            newPass.setType(passPackage.getType());
+            newPass.setPrice(passPackage.getPrice());
             newPass.setPurchaseDate(now);
             newPass.setExpiryDate(expiryDate);
             newPass.setStatus("ACTIVE");
@@ -106,12 +101,12 @@ public class PassController {
             user.setActivePassId(savedPass.getId());
             userRepository.save(user);
 
-            return ResponseEntity.ok(Map.of("message", "Kích hoạt thẻ thành công bằng điểm!", "redirect", "/dashboard?vnpay_status=success"));
+            return ResponseEntity.ok(Map.of("message", "Kích hoạt chức năng thẻ thành công bằng điểm!", "redirect", "/my-tickets"));
         }
 
-        // Trường hợp 2: Còn số thực trả -> Đi qua VNPAY
-        // Thêm format pointsToUse vào orderInfo để PaymentController xử lý trừ điểm sau khi pay thành công
-        String orderInfo = "PASS:" + type.toUpperCase() + ":" + username + ":" + pointsToUse;
+        // 2. Còn số tiền thực trả -> Đi qua VNPAY
+        // Lưu data package thay vì cứng type
+        String orderInfo = "PASS:" + packageId + ":" + username + ":" + pointsToUse;
         
         String paymentUrl = vnPayService.createPaymentUrl(request, finalPrice, orderInfo);
         return ResponseEntity.ok(Map.of("message", "Redirecting to VNPAY", "paymentUrl", paymentUrl));

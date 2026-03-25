@@ -6,6 +6,7 @@ import com.example.HUTECHBUS.model.Ticket;
 import com.example.HUTECHBUS.model.User;
 import com.example.HUTECHBUS.repository.ActiveTripMongoRepository;
 import com.example.HUTECHBUS.repository.TicketPassRepository;
+import com.example.HUTECHBUS.repository.PassPackageRepository;
 import com.example.HUTECHBUS.repository.TicketMongoRepository;
 import com.example.HUTECHBUS.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,9 @@ public class BookingController {
 
     @Autowired
     private TicketMongoRepository ticketMongoRepository;
+
+    @Autowired
+    private PassPackageRepository passPackageRepository;
 
     @GetMapping("/booking")
     public String showBookingPage() {
@@ -98,9 +102,18 @@ public class BookingController {
     @GetMapping("/buy-pass")
     public String showBuyPassPage(Model model, Principal principal) {
         if (principal != null) {
-            userRepository.findByUsername(principal.getName()).ifPresent(user -> {
+            String username = principal.getName();
+            userRepository.findByUsername(username).ifPresent(user -> {
                 model.addAttribute("hPoints", user.getHPoints());
             });
+            // Load all available Pass Packages for purchase
+            java.util.List<com.example.HUTECHBUS.model.PassPackage> packages = passPackageRepository.findAll();
+            model.addAttribute("packages", packages);
+
+            // Load user's passes assigned/created by admin
+            List<TicketPass> myPasses = ticketPassRepository.findByUserId(username);
+            model.addAttribute("myPasses", myPasses);
+            model.addAttribute("hasActive", myPasses.stream().anyMatch(p -> "ACTIVE".equals(p.getStatus())));
         }
         return "buy-pass";
     }
