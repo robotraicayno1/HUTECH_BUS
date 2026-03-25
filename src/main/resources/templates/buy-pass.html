@@ -107,7 +107,18 @@
                     <input type="number" id="pointsToUse" value="0" min="0" 
                            style="width: 100px; padding: 8px; border-radius: 8px; border: 1px solid #ddd; background: white; color: var(--text-main); text-align: center;">
                 </div>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; margin-bottom: 0;">* Điểm sẽ được trừ trực tiếp vào giá vé ngay sau khi xác nhận.</p>
+                <div style="display: flex; gap: 10px; align-items: center; margin-top: 15px;">
+                    <span style="font-size: 0.9rem; flex: 1;">Chọn Voucher giảm giá:</span>
+                    <select id="userVoucher" style="width: 250px; padding: 8px; border-radius: 8px; border: 1px solid #ddd; background: white; color: var(--text-main);">
+                        <option value="NONE">-- Không dùng voucher --</option>
+                        <option th:each="uv : ${myVouchers}" 
+                                th:value="${uv.id}" 
+                                th:data-discount="${uv.discountAmount}"
+                                th:text="${uv.voucherName + ' (-' + #numbers.formatInteger(uv.discountAmount, 0, 'POINT') + 'đ)'}">
+                        </option>
+                    </select>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; margin-bottom: 0;">* Điểm và Voucher sẽ được trừ trực tiếp vào giá vé ngay sau khi xác nhận.</p>
             </div>
 
             <div style="background: rgba(255,107,0,0.08); border: 1px solid var(--primary); padding: 15px; border-radius: 12px; margin-top: 20px; color: var(--text-main); display: flex; align-items: center; gap: 15px;">
@@ -191,6 +202,10 @@
         async function confirmBuy(packageId, packageName, price) {
             const hPoints = /*[[${hPoints}]]*/ 0;
             const pointsToUse = parseInt(document.getElementById('pointsToUse').value) || 0;
+            const voucherSelect = document.getElementById('userVoucher');
+            const voucherId = voucherSelect.value;
+            const voucherDiscount = voucherId !== 'NONE' ? 
+                                    parseInt(voucherSelect.options[voucherSelect.selectedIndex].getAttribute('data-discount')) : 0;
             
             if (pointsToUse < 0) {
                 alert('Số điểm không hợp lệ.');
@@ -202,17 +217,14 @@
                 return;
             }
 
-            const discount = pointsToUse * 100;
-            const finalPrice = Math.max(0, price - discount);
+            const pointDiscount = pointsToUse * 100;
+            const finalPrice = Math.max(0, price - pointDiscount - voucherDiscount);
 
             let confirmMsg = `Bạn có chắc chắn muốn mua gói cước: ${packageName}?`;
-            if (pointsToUse > 0) {
-                confirmMsg += `\n\n- Sử dụng ${pointsToUse} điểm H-Point.`;
-                confirmMsg += `\n- Giảm giá: -${discount.toLocaleString()} đ.`;
-                confirmMsg += `\n- Số tiền thực hiện: ${finalPrice.toLocaleString()} VNĐ.`;
-            } else {
-                confirmMsg += `\n\n- Số tiền: ${price.toLocaleString()} VNĐ.`;
-            }
+            confirmMsg += `\n\n- Giá gốc: ${price.toLocaleString()} đ`;
+            if (pointDiscount > 0) confirmMsg += `\n- Dùng điểm: -${pointDiscount.toLocaleString()} đ`;
+            if (voucherDiscount > 0) confirmMsg += `\n- Voucher: -${voucherDiscount.toLocaleString()} đ`;
+            confirmMsg += `\n- Cần thanh toán: ${finalPrice.toLocaleString()} VNĐ.`;
 
             if (!confirm(confirmMsg)) return;
 
@@ -220,7 +232,11 @@
                 const response = await fetch('/api/passes/buy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ packageId: packageId, pointsToUse: pointsToUse })
+                    body: JSON.stringify({ 
+                        packageId: packageId, 
+                        pointsToUse: pointsToUse,
+                        voucherId: voucherId
+                    })
                 });
 
                 if (response.ok) {

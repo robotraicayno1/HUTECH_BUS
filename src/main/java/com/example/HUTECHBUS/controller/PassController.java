@@ -13,6 +13,8 @@ import com.example.HUTECHBUS.model.TicketPass;
 import com.example.HUTECHBUS.repository.TicketPassRepository;
 import com.example.HUTECHBUS.model.PassPackage;
 import com.example.HUTECHBUS.repository.PassPackageRepository;
+import com.example.HUTECHBUS.repository.UserVoucherRepository;
+import com.example.HUTECHBUS.model.UserVoucher;
 import java.security.Principal;
 import java.util.Map;
 import java.util.Optional;
@@ -29,6 +31,9 @@ public class PassController {
 
     @Autowired
     private PassPackageRepository passPackageRepository;
+
+    @Autowired
+    private UserVoucherRepository userVoucherRepository;
 
     @Autowired
     private VnPayService vnPayService;
@@ -66,15 +71,39 @@ public class PassController {
 
         long originalPrice = passPackage.getPrice();
         long discount = pointsToUse * 100L;
-        long finalPrice = originalPrice - discount;
+        
+        // --- XỬ LÝ VOUCHER (MỚI) ---
+        String voucherId = (String) payload.get("voucherId");
+        long voucherDiscount = 0;
+        if (voucherId != null && !voucherId.trim().equalsIgnoreCase("none") && !voucherId.trim().isEmpty()) {
+            Optional<com.example.HUTECHBUS.model.UserVoucher> uvOpt = userVoucherRepository.findById(voucherId);
+            if (uvOpt.isPresent()) {
+                com.example.HUTECHBUS.model.UserVoucher uv = uvOpt.get();
+                if ("ACTIVE".equals(uv.getStatus()) && uv.getUserId().equals(user.getId())) {
+                    voucherDiscount = uv.getDiscountAmount();
+                }
+            }
+        }
+
+        long finalPrice = originalPrice - discount - voucherDiscount;
         if (finalPrice < 0) finalPrice = 0;
 
         String username = principal.getName();
 
-        // 1. Thanh toán toàn bộ bằng H-Point -> Kích hoạt luôn
+        // 1. Thanh toán toàn bộ bằng H-Point/Voucher -> Kích hoạt luôn
         if (finalPrice <= 0) {
-            user.setHPoints(user.getHPoints() - pointsToUse);
-            userRepository.save(user);
+            if (pointsToUse > 0) {
+                user.setHPoints(user.getHPoints() - pointsToUse);
+                userRepository.save(user);
+            }
+            
+            // Đánh dấu voucher đã dùng (nếu có)
+            if (voucherId != null && !voucherId.trim().equalsIgnoreCase("none") && !voucherId.trim().isEmpty()) {
+                userVoucherRepository.findById(voucherId).ifPresent(uv -> {
+                    uv.setStatus("USED");
+                    userVoucherRepository.save(uv);
+                });
+            }
 
             java.time.LocalDateTime now = java.time.LocalDateTime.now();
             java.time.LocalDateTime[] startDateRef = { now };
@@ -101,12 +130,11 @@ public class PassController {
             user.setActivePassId(savedPass.getId());
             userRepository.save(user);
 
-            return ResponseEntity.ok(Map.of("message", "Kích hoạt chức năng thẻ thành công bằng điểm!", "redirect", "/my-tickets"));
+            return ResponseEntity.ok(Map.of("message", "Kích hoạt chức năng thẻ thành công!", "redirect", "/my-tickets"));
         }
 
         // 2. Còn số tiền thực trả -> Đi qua VNPAY
-        // Lưu data package thay vì cứng type
-        String orderInfo = "PASS:" + packageId + ":" + username + ":" + pointsToUse;
+        String orderInfo = "PASS:" + packageId + ":" + username + ":" + pointsToUse + ":" + (voucherId != null ? voucherId : "NONE");
         
         String paymentUrl = vnPayService.createPaymentUrl(request, finalPrice, orderInfo);
         return ResponseEntity.ok(Map.of("message", "Redirecting to VNPAY", "paymentUrl", paymentUrl));

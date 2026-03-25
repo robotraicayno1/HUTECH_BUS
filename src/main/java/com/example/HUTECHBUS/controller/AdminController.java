@@ -1,9 +1,11 @@
 package com.example.HUTECHBUS.controller;
 
+import com.example.HUTECHBUS.model.ActiveTrip;
 import com.example.HUTECHBUS.model.Route;
 import com.example.HUTECHBUS.model.Stop;
 import com.example.HUTECHBUS.model.Vehicle;
 import com.example.HUTECHBUS.model.Voucher;
+import com.example.HUTECHBUS.repository.ActiveTripMongoRepository;
 import com.example.HUTECHBUS.repository.RouteRepository;
 import com.example.HUTECHBUS.repository.StopRepository;
 import com.example.HUTECHBUS.repository.TicketPassRepository;
@@ -26,6 +28,9 @@ public class AdminController {
 
     @Autowired
     private VehicleRepository vehicleRepository;
+
+    @Autowired
+    private ActiveTripMongoRepository activeTripRepository;
 
     @Autowired
     private RouteRepository routeRepository;
@@ -89,8 +94,40 @@ public class AdminController {
     @GetMapping("/vehicles")
     public String manageVehicles(Model model, Principal principal) {
         if (principal != null) model.addAttribute("username", principal.getName());
-        model.addAttribute("vehicles", vehicleRepository.findAll());
-        model.addAttribute("routes", routeRepository.findAll()); // For selecting route in form
+        
+        java.util.List<Vehicle> vehicles = vehicleRepository.findAll();
+        java.util.List<ActiveTrip> activeTrips = activeTripRepository.findByStatus("RUNNING");
+        
+        java.util.List<java.util.Map<String, Object>> vehicleInfos = new java.util.ArrayList<>();
+        for (Vehicle v : vehicles) {
+            java.util.Map<String, Object> info = new java.util.HashMap<>();
+            info.put("id", v.getId());
+            info.put("licensePlate", v.getLicensePlate());
+            info.put("capacity", v.getCapacity());
+            info.put("status", v.getStatus());
+            info.put("routeId", v.getRouteId());
+            info.put("driverId", v.getDriverId());
+            info.put("assignedDriverName", v.getDriverName());
+            
+            // Tìm chuyến đang chạy của xe này
+            java.util.Optional<ActiveTrip> activeTrip = activeTrips.stream()
+                .filter(t -> v.getId().equals(t.getVehicleId()))
+                .findFirst();
+                
+            if (activeTrip.isPresent()) {
+                info.put("isActive", true);
+                info.put("activeDriverName", activeTrip.get().getDriverName());
+            } else {
+                info.put("isActive", false);
+                info.put("activeDriverName", null);
+            }
+            vehicleInfos.add(info);
+        }
+        
+        model.addAttribute("vehicleInfos", vehicleInfos);
+        model.addAttribute("vehicles", vehicles); // For modal th:object
+        model.addAttribute("routes", routeRepository.findAll());
+        model.addAttribute("drivers", userRepository.findByRolesContaining("MANAGER"));
         model.addAttribute("newVehicle", new Vehicle());
         return "admin/vehicles";
     }
@@ -104,6 +141,16 @@ public class AdminController {
         if (vehicle.getRouteId() != null && vehicle.getRouteId().trim().isEmpty()) {
             vehicle.setRouteId(null);
         }
+        
+        // Lookup driver name if driverId is provided
+        if (vehicle.getDriverId() != null && !vehicle.getDriverId().isEmpty()) {
+            userRepository.findByUsername(vehicle.getDriverId()).ifPresent(u -> {
+                vehicle.setDriverName(u.getFullName());
+            });
+        } else {
+            vehicle.setDriverName(null);
+        }
+
         vehicleRepository.save(vehicle);
         return "redirect:/admin/vehicles";
     }

@@ -3,19 +3,26 @@ package com.example.HUTECHBUS.config;
 import com.example.HUTECHBUS.model.Route;
 import com.example.HUTECHBUS.model.Stop;
 import com.example.HUTECHBUS.model.User;
-import com.example.HUTECHBUS.repository.RouteRepository;
-import com.example.HUTECHBUS.repository.StopRepository;
 import com.example.HUTECHBUS.repository.UserRepository;
+import com.example.HUTECHBUS.repository.StopRepository;
+import com.example.HUTECHBUS.repository.RouteRepository;
 import com.example.HUTECHBUS.repository.VoucherRepository;
+import com.example.HUTECHBUS.repository.UserVoucherRepository;
+import com.example.HUTECHBUS.repository.TicketPassRepository;
+import com.example.HUTECHBUS.repository.PassPackageRepository;
 import com.example.HUTECHBUS.model.Voucher;
+import com.example.HUTECHBUS.model.UserVoucher;
+import com.example.HUTECHBUS.model.TicketPass;
+import com.example.HUTECHBUS.model.PassPackage;
 import org.springframework.beans.factory.annotation.Autowired;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Khởi tạo dữ liệu mẫu cho cơ sở dữ liệu HUTECHBUS khi ứng dụng khởi động.
@@ -36,17 +43,20 @@ public class DataSeeder {
             StopRepository stopRepository,
             RouteRepository routeRepository,
             PasswordEncoder passwordEncoder,
-            VoucherRepository voucherRepository) {
+            VoucherRepository voucherRepository,
+            UserVoucherRepository userVoucherRepository,
+            TicketPassRepository ticketPassRepository,
+            PassPackageRepository passPackageRepository) {
         return args -> {
-            // Xóa toàn bộ dữ liệu cũ để re-seed sạch
-            userRepository.deleteAll();
-            stopRepository.deleteAll();
-            routeRepository.deleteAll();
-            voucherRepository.deleteAll();
+            // KHÔNG XÓA DỮ LIỆU CŨ NỮA (Để dữ liệu sống vĩnh viễn trong CSDL)
+            // userRepository.deleteAll(); 
+            // stopRepository.deleteAll();
+            // ...
 
             // ================================
             // CÁC TRẠM DỪNG - CAMPUS HUTECH
             // ================================
+            if (stopRepository.count() == 0) {
 
             Stop campusA = new Stop();
             campusA.setId("STOP_A");
@@ -278,6 +288,75 @@ public class DataSeeder {
             cashback30k.setDiscountAmount(30000);
             voucherRepository.save(cashback30k);
 
+            // ================================
+            // MẪU THẺ VÉ (TICKET PASS) CHO ADMIN
+            // ================================
+            TicketPass adminWeeklyPass = new TicketPass();
+            adminWeeklyPass.setUserId("admin01");
+            adminWeeklyPass.setType("WEEK");
+            adminWeeklyPass.setPrice(50000);
+            adminWeeklyPass.setPurchaseDate(LocalDateTime.now());
+            adminWeeklyPass.setExpiryDate(LocalDateTime.now().plusDays(7));
+            adminWeeklyPass.setStatus("ACTIVE");
+            ticketPassRepository.save(adminWeeklyPass);
+
+            admin.setActivePassId(adminWeeklyPass.getId());
+            userRepository.save(admin);
+
+            // ================================
+            // CÁC GÓI THẺ VÉ (PASS PACKAGES)
+            // ================================
+            PassPackage weekPkg = new PassPackage();
+            weekPkg.setId("PKG_WEEK");
+            weekPkg.setName("Thẻ Tuần");
+            weekPkg.setType("WEEK");
+            weekPkg.setPrice(50000);
+            weekPkg.setDurationDays(7);
+            weekPkg.setDescription("Hiệu lực 7 ngày kể từ ngày đăng ký/cộng dồn");
+            passPackageRepository.save(weekPkg);
+
+            PassPackage monthPkg = new PassPackage();
+            monthPkg.setId("PKG_MONTH");
+            monthPkg.setName("Thẻ Tháng");
+            monthPkg.setType("MONTH");
+            monthPkg.setPrice(180000);
+            monthPkg.setDurationDays(30);
+            monthPkg.setDescription("Hiệu lực 30 ngày kể từ ngày đăng ký/cộng dồn");
+            passPackageRepository.save(monthPkg);
+
+            PassPackage yearPkg = new PassPackage();
+            yearPkg.setId("PKG_YEAR");
+            yearPkg.setName("Thẻ Năm");
+            yearPkg.setType("YEAR");
+            yearPkg.setPrice(1500000);
+            yearPkg.setDurationDays(365);
+            yearPkg.setDescription("Tiết kiệm tối đa - Hiệu lực 365 ngày");
+            passPackageRepository.save(yearPkg);
+
+            // ================================
+            // MẪU VOUCHER ĐÃ ĐỔI (DÀNH CHO ADMIN TEST)
+            // ================================
+            UserVoucher adminV1 = new UserVoucher();
+            adminV1.setUserId(admin.getId());
+            adminV1.setVoucherId(discount10kAny.getId());
+            adminV1.setVoucherName("Voucher Giảm 10k (Mẫu Admin)");
+            adminV1.setTicketType("DISCOUNT");
+            adminV1.setDiscountAmount(10000);
+            adminV1.setStatus("ACTIVE");
+            adminV1.setAcquiredDate(LocalDateTime.now());
+            userVoucherRepository.save(adminV1);
+
+            UserVoucher adminV2 = new UserVoucher();
+            adminV2.setUserId(admin.getId());
+            adminV2.setVoucherId(discount5kAny.getId());
+            adminV2.setVoucherName("Voucher Giảm 5k (Mẫu Admin)");
+            adminV2.setTicketType("DISCOUNT");
+            adminV2.setDiscountAmount(5000);
+            adminV2.setStatus("ACTIVE");
+            adminV2.setAcquiredDate(LocalDateTime.now());
+            userVoucherRepository.save(adminV2);
+
+            } // Kết thúc if (stopRepository.count() == 0)
         };
     }
 }

@@ -5,16 +5,21 @@ const seatPrice = 10000; // Giá tiền mỗi vé (VD: 10.000 VNĐ)
 
 // --- 1.1 Khởi tạo dữ liệu từ Server ---
 let currentRouteId = new URLSearchParams(window.location.search).get('routeId') || '1'; 
+let currentTripId = new URLSearchParams(window.location.search).get('tripId');
 let activeTrip = null;
 let selectedSeats = []; 
 let userPass = null; // Lưu trữ thông tin thẻ vé của user
+let availableVouchers = [];
 
 // Khởi tạo sơ đồ khi tải trang
-document.addEventListener('DOMContentLoaded', () => {
-    checkUserPass(); // Kiểm tra thẻ vé trước
-    fetchActiveTrip(); 
-    fetchRouteStops(); // Lấy danh sách trạm dừng
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkUserPass(); 
+    await fetchActiveTrip(); 
+    fetchRouteStops(); 
+    fetchAvailableVouchers(); // Lấy danh sách voucher
     startCountdown(30 * 60); 
+
+    document.getElementById('voucher-select').addEventListener('change', updateSummary);
 });
 
 async function checkUserPass() {
@@ -34,13 +39,19 @@ async function checkUserPass() {
 
 async function fetchActiveTrip() {
     try {
-        const response = await fetch(`/api/bookings/active/${currentRouteId}`);
+        const url = currentTripId 
+            ? `/api/bookings/active-trip/${currentTripId}`
+            : `/api/bookings/active/${currentRouteId}`;
+            
+        const response = await fetch(url);
         if (response.ok) {
             activeTrip = await response.json();
             document.getElementById('route-name-display').textContent = activeTrip.routeName;
+            if (activeTrip.vehicleLicensePlate) {
+                document.getElementById('vehicle-plate-display').textContent = activeTrip.vehicleLicensePlate;
+            }
             initBusLayout(activeTrip);
         } else {
-            // Nếu không có chuyến đang chạy, vẫn cho hiện sơ đồ trống để test hoặc thông báo
             console.warn('Không tìm thấy chuyến xe đang chạy.');
             initBusLayout(null);
         }
@@ -55,22 +66,39 @@ async function fetchRouteStops() {
         const response = await fetch(`/api/routes/${currentRouteId}`);
         if (response.ok) {
             const data = await response.json();
-            const select = document.getElementById('pickup-point-select');
-            select.innerHTML = '';
+            const stops = data.stops || [];
             
-            if (data.stops && data.stops.length > 0) {
-                data.stops.forEach(stop => {
-                    const option = document.createElement('option');
-                    option.value = stop.name;
-                    option.textContent = stop.name;
-                    select.appendChild(option);
-                });
-            } else {
-                select.innerHTML = '<option value="Chưa xác định">Chưa xác định</option>';
-            }
+            const pickupSelect = document.getElementById('pickup-point-select');
+            const dropoffSelect = document.getElementById('dropoff-point-select');
+            
+            const options = stops.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+            pickupSelect.innerHTML = options;
+            
+            // Drop-off points are usually shown in reverse order for convenience, 
+            // but we can just use the same list or reverse it.
+            dropoffSelect.innerHTML = stops.map(s => `<option value="${s.name}">${s.name}</option>`).reverse().join('');
         }
     } catch (error) {
         console.error('Lỗi khi tải danh sách trạm đón:', error);
+    }
+}
+
+async function fetchAvailableVouchers() {
+    try {
+        const response = await fetch('/api/bookings/vouchers');
+        if (response.ok) {
+            availableVouchers = await response.json();
+            const select = document.getElementById('voucher-select');
+            select.innerHTML = '<option value="">-- Không sử dụng --</option>';
+            availableVouchers.forEach(v => {
+                const option = document.createElement('option');
+                option.value = v.id;
+                option.textContent = `${v.voucherName} (-${v.discountAmount.toLocaleString()}đ)`;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Lỗi khi tải danh sách voucher:', error);
     }
 }
 
@@ -109,12 +137,20 @@ function createSeatElement(container, seatId, bookedSeatsList) {
     const COL_MAP = [1, 2, 4, 5]; // cột tương ứng cho ghế 1→4 trong mỗi hàng
     let gridCol = null;
 
-    if (totalSeats === 45 && seatId >= 41) {
-        // Hàng cuối 5 ghế → trải đều 5 cột
-        gridCol = seatId - 40; // 1 → 5
-    } else {
-        const posInRow = (seatId - 1) % 4; // 0,1,2,3
-        gridCol = COL_MAP[posInRow];
+    if (totalSeats >= 16) {
+        const seatsPerRow = 4;
+        if (seatId <= (Math.floor(totalSeats / seatsPerRow) * seatsPerRow)) {
+            const posInRow = (seatId - 1) % seatsPerRow;
+            gridCol = COL_MAP[posInRow];
+        } else {
+            // Special handling for the last row (e.g. 45-seat bus)
+            if (totalSeats === 45 && seatId > 40) {
+                gridCol = seatId - 40; // 1 → 5
+            } else {
+                // Just spread them (fallback)
+                gridCol = (seatId % 5) || 5;
+            }
+        }
     }
 
     const seat = document.createElement('div');
@@ -180,7 +216,30 @@ function updateSummary() {
             btnCheckout.textContent = 'Tiến Hành Đặt Chỗ';
         }
 
-        totalPriceEl.textContent = total.toLocaleString('vi-VN') + ' VNĐ';
+        // --- XỬ LÝ VOUCHER (Luôn hiển thị nếu có) ---
+        const selectedVoucherId = document.getElementById('voucher-select').value;
+        if (selectedVoucherId) {
+            const voucher = availableVouchers.find(v => v.id === selectedVoucherId);
+            if (voucher) {
+                const discount = Math.min(total, voucher.discountAmount);
+                total -= discount;
+                
+                // Update totalPriceEl to show original price struck through and discounted price
+                totalPriceEl.innerHTML = `<span style="text-decoration: line-through; color: #999; font-size: 0.8rem; margin-right: 8px;">${(selectedSeats.length * seatPrice).toLocaleString()}đ</span>` + 
+                                         `<span>${total.toLocaleString('vi-VN')} VNĐ</span>`;
+                
+                // If not using a pass, update button text with discounted price
+                if (!userPass) {
+                    btnCheckout.textContent = 'Tiến Hành Đặt Chỗ (' + total.toLocaleString('vi-VN') + ' VNĐ)';
+                }
+            }
+        } else {
+            // If no voucher selected, display total price normally
+            totalPriceEl.textContent = total.toLocaleString('vi-VN') + ' VNĐ';
+            if (!userPass) {
+                btnCheckout.textContent = 'Tiến Hành Đặt Chỗ (' + total.toLocaleString('vi-VN') + ' VNĐ)';
+            }
+        }
         
         // Kích hoạt nút thanh toán
         btnCheckout.disabled = false;
@@ -231,12 +290,16 @@ document.getElementById('btn-checkout').addEventListener('click', async () => {
     // Đọc phương thức thanh toán
     const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || "TRANSFER";
     const pickupPoint = document.getElementById('pickup-point-select').value;
+    const dropoffPoint = document.getElementById('dropoff-point-select').value;
 
     const bookingData = {
         routeId: currentRouteId,
+        tripId: currentTripId || (activeTrip ? activeTrip.id : null),
         seatNumbers: selectedSeats.map(id => parseInt(id)),
         paymentType: userPass ? "PASS" : paymentMethod,
-        pickupPoint: pickupPoint
+        pickupPoint: pickupPoint,
+        dropoffPoint: dropoffPoint,
+        voucherId: document.getElementById('voucher-select').value
     };
 
     try {
@@ -273,6 +336,7 @@ document.getElementById('btn-checkout').addEventListener('click', async () => {
                 if (paymentData.code === "00") {
                     localStorage.setItem('hutech_booked_seats', JSON.stringify(selectedSeats));
                     localStorage.setItem('hutech_current_pickup_point', pickupPoint);
+                    localStorage.setItem('hutech_current_dropoff_point', dropoffPoint);
                     localStorage.setItem('hutech_current_payment_status', 'Đã Thanh Toán');
                     window.location.href = paymentData.data; 
                 } else {
