@@ -150,6 +150,7 @@
     <div class="sidebar">
         <h2>HUTECH<span>BUS</span></h2>
         
+<<<<<<< HEAD
 
         
         <div class="mt-4 mb-2 ps-3 text-white-50 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">QUẢN TRỊ ADMIN</div>
@@ -190,9 +191,37 @@
                     <i class="bi bi-person-badge-fill me-2"></i>Quản lý Nhân sự</a>
             </div>
         </div>
+=======
+        <div class="mt-2 mb-3 ps-2 text-white-50 fw-bold" style="font-size: 0.8rem; letter-spacing: 1px;">Quyền Admin</div>
+
+        <a href="/admin/dashboard" class="nav-link-custom" th:classappend="${activeMenu == 'dashboard'} ? 'active' : ''">
+            <i class="bi bi-grid-1x2-fill me-2"></i> Tổng quan
+        </a>
+        <a href="/admin/vehicles" class="nav-link-custom" th:classappend="${activeMenu == 'vehicles'} ? 'active' : ''">
+            <i class="bi bi-bus-front-fill me-2"></i> Quản lý Xe Bus
+        </a>
+        <a href="/admin/routes" class="nav-link-custom" th:classappend="${activeMenu == 'routes'} ? 'active' : ''">
+            <i class="bi bi-map-fill me-2"></i> Quản lý Tuyến
+        </a>
+        <a href="/admin/stops" class="nav-link-custom" th:classappend="${activeMenu == 'stops'} ? 'active' : ''">
+            <i class="bi bi-geo-alt-fill me-2"></i> Quản lý Trạm dừng
+        </a>
+        
+        <div class="mt-4 mb-3 ps-2 text-white-50 fw-bold" style="font-size: 0.8rem; letter-spacing: 1px;">Quản lý Người Dùng</div>
+        <a href="/admin/students" class="nav-link-custom" th:classappend="${activeMenu == 'students'} ? 'active' : ''">
+            <i class="bi bi-people-fill me-2"></i> Quản lý Sinh viên
+        </a>
+        <a href="/admin/staffs" class="nav-link-custom" th:classappend="${activeMenu == 'staffs'} ? 'active' : ''">
+            <i class="bi bi-person-badge-fill me-2"></i> Quản lý Nhân sự
+        </a>
+>>>>>>> bed3500435ebea4b61c6dcf60486cd4f095c2c85
         
         <div style="flex: 1;"></div>
-        <a href="#" class="nav-link-custom mt-5">Cài đặt tài khoản</a>
+        
+        <!-- Tuỳ chọn trở về trang User dành cho Admin -->
+        <a href="/" class="nav-link-custom mt-5" style="background: rgba(255,255,255,0.05);">
+            <i class="bi bi-box-arrow-left me-2"></i> Về trang User
+        </a>
     </div>
 
     <!-- Main Content -->
