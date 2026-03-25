@@ -239,8 +239,16 @@
                     <strong id="route-name-display">...</strong>
                 </div>
                 <div class="detail-row">
+                    <span>Xe bus:</span>
+                    <strong id="vehicle-plate-display">---</strong>
+                </div>
+                <div class="detail-row">
                     <span>Điểm đón:</span>
-                    <select id="pickup-point-select"></select>
+                    <select id="pickup-point-select" style="max-width: 180px; font-family: inherit; font-size: 0.8rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #e5e7eb; background: white; color: var(--navy); outline: none; cursor: pointer;"></select>
+                </div>
+                <div class="detail-row">
+                    <span>Điểm đến:</span>
+                    <select id="dropoff-point-select" style="max-width: 180px; font-family: inherit; font-size: 0.8rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #e5e7eb; background: white; color: var(--navy); outline: none; cursor: pointer;"></select>
                 </div>
                 <div class="detail-row">
                     <span>Giờ chạy:</span>
@@ -249,6 +257,12 @@
                 <div class="detail-row">
                     <span>Ghế đã chọn:</span>
                     <strong id="selected-seats-list">Chưa chọn</strong>
+                </div>
+                <div class="detail-row">
+                    <span>Mã giảm giá:</span>
+                    <select id="voucher-select" style="max-width: 150px; font-family: inherit; font-size: 0.8rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #e5e7eb; background: white; color: var(--navy); outline: none; cursor: pointer;">
+                        <option value="">-- Không sử dụng --</option>
+                    </select>
                 </div>
 
                 <div style="margin-top:16px;">

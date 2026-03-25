@@ -9,6 +9,8 @@ import com.example.HUTECHBUS.repository.TicketPassRepository;
 import com.example.HUTECHBUS.repository.PassPackageRepository;
 import com.example.HUTECHBUS.repository.TicketMongoRepository;
 import com.example.HUTECHBUS.repository.UserRepository;
+import com.example.HUTECHBUS.repository.UserVoucherRepository;
+import com.example.HUTECHBUS.model.UserVoucher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -47,6 +49,9 @@ public class BookingController {
 
     @Autowired
     private PassPackageRepository passPackageRepository;
+
+    @Autowired
+    private UserVoucherRepository userVoucherRepository;
 
     @GetMapping("/booking")
     public String showBookingPage() {
@@ -114,6 +119,11 @@ public class BookingController {
             List<TicketPass> myPasses = ticketPassRepository.findByUserId(username);
             model.addAttribute("myPasses", myPasses);
             model.addAttribute("hasActive", myPasses.stream().anyMatch(p -> "ACTIVE".equals(p.getStatus())));
+            
+            // Tải danh sách Voucher có thể dùng để mua thẻ (MỚI)
+            userRepository.findByUsername(username).ifPresent(user -> {
+                model.addAttribute("myVouchers", userVoucherRepository.findByUserIdAndStatus(user.getId(), "ACTIVE"));
+            });
         }
         return "buy-pass";
     }
@@ -124,18 +134,46 @@ public class BookingController {
     @ResponseBody
     public ResponseEntity<?> getActivePass(Principal principal) {
         if (principal == null) return ResponseEntity.status(401).body("Yêu cầu đăng nhập.");
+        String username = principal.getName();
         
-        Optional<User> userOpt = userRepository.findByUsername(principal.getName());
-        if (userOpt.isEmpty() || userOpt.get().getActivePassId() == null) {
-            return ResponseEntity.ok(Map.of("hasActivePass", false));
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            // 1. Kiểm tra field activePassId trên User
+            if (user.getActivePassId() != null) {
+                Optional<TicketPass> passOpt = ticketPassRepository.findById(user.getActivePassId());
+                if (passOpt.isPresent() && "ACTIVE".equals(passOpt.get().getStatus())) {
+                    return ResponseEntity.ok(Map.of("hasActivePass", true, "pass", passOpt.get()));
+                }
+            }
         }
+        
+        // 2. Dự phòng: Tìm theo username và status ACTIVE (Dành cho re-seed hoặc lỗi link)
+        // Ưu tiên thẻ có ngày hết hạn xa nhất
+        Optional<TicketPass> fallbackPass = ticketPassRepository.findByUserId(username).stream()
+            .filter(p -> "ACTIVE".equals(p.getStatus()))
+            .filter(p -> p.getExpiryDate().isAfter(LocalDateTime.now()))
+            .sorted((p1, p2) -> p2.getExpiryDate().compareTo(p1.getExpiryDate()))
+            .findFirst();
 
-        Optional<TicketPass> passOpt = ticketPassRepository.findById(userOpt.get().getActivePassId());
-        if (passOpt.isPresent() && "ACTIVE".equals(passOpt.get().getStatus())) {
-            return ResponseEntity.ok(Map.of("hasActivePass", true, "pass", passOpt.get()));
+        if (fallbackPass.isPresent()) {
+            return ResponseEntity.ok(Map.of("hasActivePass", true, "pass", fallbackPass.get()));
         }
         
         return ResponseEntity.ok(Map.of("hasActivePass", false));
+    }
+
+    /**
+     * Lấy danh sách voucher chưa sử dụng của tôi.
+     */
+    @GetMapping("/api/bookings/vouchers")
+    @ResponseBody
+    public ResponseEntity<?> getMyVouchers(Principal principal) {
+        if (principal == null) return ResponseEntity.status(401).body("Yêu cầu đăng nhập.");
+        User user = userRepository.findByUsername(principal.getName()).orElse(null);
+        if (user == null) return ResponseEntity.notFound().build();
+        
+        return ResponseEntity.ok(userVoucherRepository.findByUserIdAndStatus(user.getId(), "ACTIVE"));
     }
 
     /**
@@ -159,6 +197,17 @@ public class BookingController {
     }
 
     /**
+     * Lấy thông tin chi tiết của một chuyến xe cụ thể bằng ID.
+     */
+    @GetMapping("/api/bookings/active-trip/{tripId}")
+    @ResponseBody
+    public ResponseEntity<?> getActiveTripById(@PathVariable String tripId) {
+        return activeTripRepository.findById(tripId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
      * Đặt chỗ và khóa ghế trên chuyến xe đang chạy.
      */
     @PostMapping("/api/bookings/reserve")
@@ -167,14 +216,22 @@ public class BookingController {
         if (principal == null) return ResponseEntity.status(401).body("Yêu cầu đăng nhập.");
         
         String routeId = (String) payload.get("routeId");
+        String tripId = (String) payload.get("tripId");
         String paymentType = (String) payload.getOrDefault("paymentType", "TRANSFER");
+        String voucherId = (String) payload.get("voucherId");
         @SuppressWarnings("unchecked")
         List<Integer> seatNumbers = (List<Integer>) payload.get("seatNumbers");
         String username = principal.getName();
 
-        Optional<ActiveTrip> tripOpt = activeTripRepository.findByRouteIdAndStatus(routeId, "RUNNING").stream().findFirst();
+        Optional<ActiveTrip> tripOpt = Optional.empty();
+        if (tripId != null && !tripId.isEmpty()) {
+            tripOpt = activeTripRepository.findById(tripId);
+        } else {
+            tripOpt = activeTripRepository.findByRouteIdAndStatus(routeId, "RUNNING").stream().findFirst();
+        }
+
         if (tripOpt.isEmpty()) {
-            return ResponseEntity.badRequest().body("Hiện không có chuyến xe nào đang chạy cho tuyến này.");
+            return ResponseEntity.badRequest().body("Hiện không có chuyến xe nào đang chạy.");
         }
 
         ActiveTrip trip = tripOpt.get();
@@ -196,13 +253,22 @@ public class BookingController {
         userSeats.addAll(seatNumbers);
         pSeats.put(username, userSeats);
         
-        // Cập nhật điểm đón nếu có
+        // Cập nhật điểm đón/đến nếu có
         String pickupPoint = (String) payload.get("pickupPoint");
+        String dropoffPoint = (String) payload.get("dropoffPoint");
+        
         if (pickupPoint != null && !pickupPoint.isEmpty()) {
             Map<String, String> pPickups = trip.getPassengerPickupPoints();
             if (pPickups == null) pPickups = new HashMap<>();
             pPickups.put(username, pickupPoint);
             trip.setPassengerPickupPoints(pPickups);
+        }
+        
+        if (dropoffPoint != null && !dropoffPoint.isEmpty()) {
+            Map<String, String> pDropoffs = trip.getPassengerDropoffPoints();
+            if (pDropoffs == null) pDropoffs = new HashMap<>();
+            pDropoffs.put(username, dropoffPoint);
+            trip.setPassengerDropoffPoints(pDropoffs);
         }
         
         // Phân loại vào danh sách online tương ứng
@@ -227,7 +293,23 @@ public class BookingController {
         newTicket.setPickupPoint((pickupPoint != null && !pickupPoint.isEmpty()) ? pickupPoint : "Chưa xác định");
         newTicket.setPaymentMethod(paymentType);
         newTicket.setSeats(seatNumbers);
-        newTicket.setTotalAmount("PASS".equals(paymentType) ? 0 : (seatNumbers.size() * 10000L)); // vé lẻ 10k
+        
+        long totalAmount = (seatNumbers.size() * 10000L);
+        if ("PASS".equals(paymentType)) {
+            totalAmount = 0;
+        } else if (voucherId != null && !voucherId.isEmpty()) {
+            Optional<UserVoucher> uvOpt = userVoucherRepository.findById(voucherId);
+            if (uvOpt.isPresent()) {
+                UserVoucher uv = uvOpt.get();
+                if ("ACTIVE".equals(uv.getStatus())) {
+                    totalAmount = Math.max(0, totalAmount - uv.getDiscountAmount());
+                    uv.setStatus("USED");
+                    userVoucherRepository.save(uv);
+                }
+            }
+        }
+        
+        newTicket.setTotalAmount(totalAmount); 
         newTicket.setBookingTime(LocalDateTime.now());
         
         ticketMongoRepository.save(newTicket);

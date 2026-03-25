@@ -18,29 +18,39 @@
                             <th>Sức chứa</th>
                             <th>Trạng thái</th>
                             <th>Tuyến (Route ID)</th>
+                            <th>Tài xế</th>
                             <th class="text-end">Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="v : ${vehicles}">
-                            <td class="fw-bold" th:text="${v.licensePlate}">51B-123.45</td>
-                            <td th:text="${v.capacity} + ' chỗ'">45 chỗ</td>
+                        <tr th:each="info : ${vehicleInfos}">
+                            <td class="fw-bold" th:text="${info.licensePlate}">51B-123.45</td>
+                            <td th:text="${info.capacity} + ' chỗ'">45 chỗ</td>
                             <td>
-                                <span class="badge" th:classappend="${v.status == 'Hoạt động' ? 'bg-success' : (v.status == 'Bảo trì' ? 'bg-warning text-dark' : 'bg-secondary')}" th:text="${v.status}">Hoạt động</span>
+                                <span class="badge" th:classappend="${info.status == 'Hoạt động' ? 'bg-success' : (info.status == 'Bảo trì' ? 'bg-warning text-dark' : 'bg-secondary')}" th:text="${info.status}">Hoạt động</span>
                             </td>
-                            <td th:text="${v.routeId != null ? v.routeId : 'Chưa phân công'}">Route_ID</td>
+                            <td th:text="${info.routeId != null ? info.routeId : 'Chưa phân công'}">Route_ID</td>
+                            <td>
+                                <div th:if="${info.isActive}">
+                                    <span class="badge bg-danger animate-pulse mb-1" style="font-size: 0.6rem;">LIVE</span><br/>
+                                    <span class="fw-bold text-danger" th:text="${info.activeDriverName}">Tài xế Đang chạy</span>
+                                </div>
+                                <div th:unless="${info.isActive}">
+                                    <span class="text-muted" th:text="${info.assignedDriverName != null ? info.assignedDriverName : 'Chưa phân công'}">Tài xế</span>
+                                </div>
+                            </td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-primary me-2" 
-                                        th:attr="onclick=|editVehicle('${v.id}', '${v.licensePlate}', '${v.capacity}', '${v.status}', '${v.routeId}')|">
+                                        th:attr="onclick=|editVehicle('${info.id}', '${info.licensePlate}', '${info.capacity}', '${info.status}', '${info.routeId}', '${info.driverId}')|">
                                     <i class="bi bi-pencil"></i> Sửa
                                 </button>
-                                <form th:action="@{/admin/vehicles/delete/{id}(id=${v.id})}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa xe này?');">
+                                <form th:action="@{/admin/vehicles/delete/{id}(id=${info.id})}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa xe này?');">
                                     <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Xóa</button>
                                 </form>
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(vehicles)}">
-                            <td colspan="5" class="text-center text-muted py-4">Chưa có dữ liệu xe bus nào.</td>
+                            <td colspan="6" class="text-center text-muted py-4">Chưa có dữ liệu xe bus nào.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -83,6 +93,13 @@
                                     <option th:each="r : ${routes}" th:value="${r.id}" th:text="|${r.name} (${r.id})|"></option>
                                 </select>
                             </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Phân công tài xế</label>
+                                <select class="form-select" id="v_driverId" name="driverId">
+                                    <option value="">-- Chưa phân công --</option>
+                                    <option th:each="d : ${drivers}" th:value="${d.username}" th:text="|${d.fullName} (${d.username})|"></option>
+                                </select>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
@@ -101,14 +118,16 @@
                 document.getElementById('v_capacity').value = '45';
                 document.getElementById('v_status').value = 'Hoạt động';
                 document.getElementById('v_routeId').value = '';
+                document.getElementById('v_driverId').value = '';
             }
 
-            function editVehicle(id, licensePlate, capacity, status, routeId) {
+            function editVehicle(id, licensePlate, capacity, status, routeId, driverId) {
                 document.getElementById('v_id').value = id;
                 document.getElementById('v_licensePlate').value = licensePlate;
                 document.getElementById('v_capacity').value = capacity;
                 document.getElementById('v_status').value = status;
-                document.getElementById('v_routeId').value = routeId === 'null' ? '' : routeId;
+                document.getElementById('v_routeId').value = (routeId === 'null' || !routeId) ? '' : routeId;
+                document.getElementById('v_driverId').value = (driverId === 'null' || !driverId) ? '' : driverId;
                 
                 var myModal = new bootstrap.Modal(document.getElementById('vehicleModal'));
                 myModal.show();

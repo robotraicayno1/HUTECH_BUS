@@ -42,6 +42,9 @@ public class PaymentController {
     @Autowired
     private PassPackageRepository passPackageRepository;
 
+    @Autowired
+    private com.example.HUTECHBUS.repository.UserVoucherRepository userVoucherRepository;
+
     @PostMapping("/create-payment")
     public ResponseEntity<?> createPayment(HttpServletRequest req, @RequestBody Map<String, Object> payload) throws UnsupportedEncodingException {
         long amount = Long.parseLong(payload.get("amount").toString()) * 100;
@@ -126,10 +129,14 @@ public class PaymentController {
                     String packageId = parts[1];
                     String username = parts[2];
                     int pointsUsed = 0;
+                    String voucherId = null;
                     if (parts.length >= 4) {
                         try {
                             pointsUsed = Integer.parseInt(parts[3]);
                         } catch (NumberFormatException ignored) {}
+                    }
+                    if (parts.length >= 5 && !"NONE".equals(parts[4])) {
+                        voucherId = parts[4];
                     }
                     
                     Optional<User> userOpt = userRepository.findByUsername(username);
@@ -142,6 +149,14 @@ public class PaymentController {
                         // Trừ điểm nếu có sử dụng
                         if (pointsUsed > 0) {
                             user.setHPoints(user.getHPoints() - pointsUsed);
+                        }
+
+                        // Đánh dấu voucher đã dùng (MỚI)
+                        if (voucherId != null) {
+                            userVoucherRepository.findById(voucherId).ifPresent(uv -> {
+                                uv.setStatus("USED");
+                                userVoucherRepository.save(uv);
+                            });
                         }
                         
                         LocalDateTime now = LocalDateTime.now();

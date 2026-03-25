@@ -11,6 +11,7 @@ import java.util.Optional;
  */
 public interface UserRepository extends MongoRepository<User, String> {
 
+
     /** Tìm người dùng theo tên đăng nhập (mã sinh viên) */
     Optional<User> findByUsername(String username);
 
