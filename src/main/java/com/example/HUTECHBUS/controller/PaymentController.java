@@ -3,8 +3,10 @@ package com.example.HUTECHBUS.controller;
 import com.example.HUTECHBUS.config.VnPayConfig;
 import com.example.HUTECHBUS.model.TicketPass;
 import com.example.HUTECHBUS.model.User;
+import com.example.HUTECHBUS.model.PassPackage;
 import com.example.HUTECHBUS.repository.TicketPassRepository;
 import com.example.HUTECHBUS.repository.UserRepository;
+import com.example.HUTECHBUS.repository.PassPackageRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,9 @@ public class PaymentController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PassPackageRepository passPackageRepository;
 
     @PostMapping("/create-payment")
     public ResponseEntity<?> createPayment(HttpServletRequest req, @RequestBody Map<String, Object> payload) throws UnsupportedEncodingException {
@@ -116,9 +121,9 @@ public class PaymentController {
             if (orderInfo != null && orderInfo.startsWith("PASS:")) {
                 // Xử lý logic mua/gia hạn thẻ vé
                 String[] parts = orderInfo.split(":");
-                // Cấu trúc dự kiến: PASS:{LoạiThẻ}:{Username}:{PointsToUse}
+                // Cấu trúc dự kiến: PASS:{packageId}:{Username}:{PointsToUse}
                 if (parts.length >= 3) {
-                    String type = parts[1]; // WEEK, MONTH, YEAR
+                    String packageId = parts[1];
                     String username = parts[2];
                     int pointsUsed = 0;
                     if (parts.length >= 4) {
@@ -128,8 +133,11 @@ public class PaymentController {
                     }
                     
                     Optional<User> userOpt = userRepository.findByUsername(username);
-                    if (userOpt.isPresent()) {
+                    Optional<PassPackage> pkgOpt = passPackageRepository.findById(packageId);
+
+                    if (userOpt.isPresent() && pkgOpt.isPresent()) {
                         User user = userOpt.get();
+                        PassPackage pkg = pkgOpt.get();
 
                         // Trừ điểm nếu có sử dụng
                         if (pointsUsed > 0) {
@@ -150,18 +158,13 @@ public class PaymentController {
                         }
 
                         // Tính toán thời gian hết hạn mới dựa trên điểm bắt đầu (startDate)
-                        LocalDateTime expiryDate;
-                        switch (type.toUpperCase()) {
-                            case "WEEK": expiryDate = startDate.plusDays(7); break;
-                            case "MONTH": expiryDate = startDate.plusMonths(1); break;
-                            case "YEAR": expiryDate = startDate.plusYears(1); break;
-                            default: expiryDate = startDate.plusMonths(1);
-                        }
+                        LocalDateTime expiryDate = startDate.plusDays(pkg.getDurationDays());
 
                         // Tạo thẻ mới trong CSDL
                         TicketPass newPass = new TicketPass();
                         newPass.setUserId(username);
-                        newPass.setType(type.toUpperCase());
+                        newPass.setType(pkg.getType());
+                        newPass.setPrice(pkg.getPrice());
                         newPass.setPurchaseDate(now);
                         newPass.setExpiryDate(expiryDate);
                         newPass.setStatus("ACTIVE");

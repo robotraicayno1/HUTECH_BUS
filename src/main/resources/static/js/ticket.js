@@ -22,6 +22,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const pickupPointEl = document.getElementById('ticket-pickup-point');
     if (pickupPointEl) pickupPointEl.textContent = pickupPoint;
     
+    // Đọc Payment Status từ localStorage
+    const paymentStatus = localStorage.getItem('hutech_current_payment_status') || 'Đã Thanh Toán';
+    const paymentBadge = document.getElementById('ticket-payment-badge');
+    if (paymentBadge) {
+        paymentBadge.textContent = paymentStatus;
+        if (paymentStatus === 'Thanh Toán Tại Xe') {
+            paymentBadge.style.background = '#f97316';
+            paymentBadge.style.color = '#fff';
+        } else if (paymentStatus.includes('Thẻ Vé')) {
+            paymentBadge.style.background = '#10b981';
+            paymentBadge.style.color = '#fff';
+        } else {
+            paymentBadge.style.background = '#e8f5e9';
+            paymentBadge.style.color = '#2e7d32';
+        }
+    }
+    
     const today = new Date();
     const formattedDate = today.toLocaleDateString('vi-VN');
     document.getElementById('ticket-date').textContent = formattedDate;

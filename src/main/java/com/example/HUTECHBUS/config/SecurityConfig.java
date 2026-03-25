@@ -14,9 +14,10 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Cấu hình Spring Security cho ứng dụng HUTECHBUS.
  *
- * - Tất cả các trang yêu cầu đăng nhập, ngoại trừ trang login và tài nguyên tĩnh.
- * - Xác thực người dùng từ MongoDB thông qua CustomUserDetailsService.
- * - Sau khi đăng nhập thành công, chuyển hướng đến /dashboard.
+ * Ma trận quyền hạn (theo roles thực tế trong MongoDB):
+ * - ADMIN   : /admin/**
+ * - MANAGER : /driver/** (tài xế)
+ * - STUDENT : /dashboard, /booking, và các trang người dùng
  */
 @Configuration
 @EnableWebSecurity
@@ -25,13 +26,14 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
 
-    /** BCrypt encoder dùng để mã hóa mật khẩu khi lưu và xác thực */
+    @Autowired
+    private RoleBasedSuccessHandler roleBasedSuccessHandler;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    /** Cấu hình DaoAuthenticationProvider để dùng MongoDB */
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -40,20 +42,30 @@ public class SecurityConfig {
         return authProvider;
     }
 
-    /** Cấu hình chuỗi bộ lọc bảo mật */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authenticationProvider(authenticationProvider())
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/booking.html", "/index.html", "/css/**", "/js/**", "/images/**", "/api/**").permitAll()
+                // Tài nguyên công khai
+                .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
+                // API
+                .requestMatchers("/api/**").permitAll()
+                // Trang Admin: chỉ ADMIN
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                // Trang Tài xế: chỉ MANAGER
+                .requestMatchers("/driver/**").hasRole("MANAGER")
+                // Trang người dùng: STUDENT và ADMIN
+                .requestMatchers("/dashboard", "/booking", "/ticket", "/routes",
+                                 "/history", "/favorites", "/notifications",
+                                 "/points", "/my-tickets", "/buy-pass").hasAnyRole("STUDENT", "ADMIN")
+                // Mọi request còn lại phải đăng nhập
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/dashboard", true)
+                .successHandler(roleBasedSuccessHandler)  // Chuyển hướng theo role
                 .permitAll()
             )
             .logout(logout -> logout

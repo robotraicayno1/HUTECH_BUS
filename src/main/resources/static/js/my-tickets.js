@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const seatsArray = Array.isArray(ticket.seats) ? ticket.seats : [];
             localStorage.setItem('hutech_booked_seats', JSON.stringify(seatsArray));
             localStorage.setItem('hutech_current_pickup_point', ticket.pickupPoint || 'Chưa xác định');
+            localStorage.setItem('hutech_current_payment_status', statusText);
             
             // Chuyển hướng sang trang chi tiết vé QR
             window.location.href = '/ticket';

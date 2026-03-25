@@ -150,11 +150,7 @@
     <div class="sidebar">
         <h2>HUTECH<span>BUS</span></h2>
         
-        <a href="/" class="nav-link-custom">Dashboard (User)</a>
-        <a href="/routes" class="nav-link-custom">Tra cứu lộ trình</a>
-        <a href="/history" class="nav-link-custom">Lịch sử chuyến đi</a>
-        <a href="/favorites" class="nav-link-custom">Đã lưu / Yêu thích</a>
-        <a href="/notifications" class="nav-link-custom">Thông báo</a>
+
         
         <div class="mt-4 mb-2 ps-3 text-white-50 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">QUẢN TRỊ ADMIN</div>
         
@@ -165,10 +161,18 @@
         
         <div class="collapse show" id="adminCollapse">
             <div class="admin-submenu">
-                <a href="/admin/dashboard" class="nav-link-custom" th:classappend="${activeMenu == 'dashboard'} ? 'active' : ''">Tổng quan</a>
-                <a href="/admin/vehicles" class="nav-link-custom" th:classappend="${activeMenu == 'vehicles'} ? 'active' : ''">Quản lý Xe Bus</a>
-                <a href="/admin/routes" class="nav-link-custom" th:classappend="${activeMenu == 'routes'} ? 'active' : ''">Quản lý Tuyến</a>
-                <a href="/admin/stops" class="nav-link-custom" th:classappend="${activeMenu == 'stops'} ? 'active' : ''">Quản lý Trạm dừng</a>
+                <a href="/admin/dashboard" class="nav-link-custom" th:classappend="${activeMenu == 'dashboard'} ? 'active' : ''">
+                    <i class="bi bi-speedometer2 me-2"></i>Tổng quan</a>
+                <a href="/admin/vehicles" class="nav-link-custom" th:classappend="${activeMenu == 'vehicles'} ? 'active' : ''">
+                    <i class="bi bi-bus-front me-2"></i>Quản lý Xe Bus</a>
+                <a href="/admin/routes" class="nav-link-custom" th:classappend="${activeMenu == 'routes'} ? 'active' : ''">
+                    <i class="bi bi-map me-2"></i>Quản lý Tuyến</a>
+                <a href="/admin/stops" class="nav-link-custom" th:classappend="${activeMenu == 'stops'} ? 'active' : ''">
+                    <i class="bi bi-geo-alt me-2"></i>Quản lý Trạm dừng</a>
+                <a href="/admin/vouchers" class="nav-link-custom" th:classappend="${activeMenu == 'vouchers'} ? 'active' : ''">
+                    <i class="bi bi-gift me-2"></i>Quản lý Voucher</a>
+                <a href="/admin/buy-pass" class="nav-link-custom" th:classappend="${activeMenu == 'buy-pass'} ? 'active' : ''">
+                    <i class="bi bi-ticket-perforated me-2"></i>Quản lý Thẻ Buy-Pass</a>
             </div>
         </div>
         
