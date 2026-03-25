@@ -4,6 +4,7 @@ import com.example.HUTECHBUS.model.Route;
 import com.example.HUTECHBUS.model.Stop;
 import com.example.HUTECHBUS.model.Vehicle;
 import com.example.HUTECHBUS.model.Voucher;
+import com.example.HUTECHBUS.model.User;
 import com.example.HUTECHBUS.repository.RouteRepository;
 import com.example.HUTECHBUS.repository.StopRepository;
 import com.example.HUTECHBUS.repository.TicketPassRepository;
@@ -17,8 +18,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.security.Principal;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin")
@@ -50,6 +56,9 @@ public class AdminController {
 
     @Autowired
     private PassPackageRepository passPackageRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     // --- Dashboard ---
     @GetMapping({"", "/", "/dashboard"})
@@ -238,5 +247,107 @@ public class AdminController {
             passPackageRepository.deleteById(id);
         }
         return "redirect:/admin/buy-pass";
+    }
+
+    // --- Students Management ---
+    @GetMapping("/students")
+    public String manageStudents(Model model, Principal principal) {
+        if (principal != null) model.addAttribute("username", principal.getName());
+        List<User> students = userRepository.findByRolesContaining("STUDENT");
+        model.addAttribute("students", students);
+        return "admin/students";
+    }
+
+    @PostMapping("/students/save")
+    public String saveStudent(
+            @RequestParam(required = false) String id,
+            @RequestParam String fullName,
+            @RequestParam String username,
+            @RequestParam(required = false) String password) {
+
+        User student;
+        if (id != null && !id.trim().isEmpty()) {
+            student = userRepository.findById(id).orElse(new User());
+        } else {
+            student = new User();
+            student.setRoles(new HashSet<>(Set.of("STUDENT")));
+        }
+
+        student.setFullName(fullName);
+        student.setUsername(username);
+        
+        // Only update password if provided
+        if (password != null && !password.trim().isEmpty()) {
+            student.setPassword(passwordEncoder.encode(password));
+        } else if (student.getId() == null) {
+            // Default password for new student if empty
+            student.setPassword(passwordEncoder.encode("123456"));
+        }
+
+        userRepository.save(student);
+        return "redirect:/admin/students";
+    }
+
+    @PostMapping({"/students/delete/{id}", "/students/delete/", "/students/delete"})
+    public String deleteStudent(@PathVariable(required = false) String id) {
+        if (id != null && !id.trim().isEmpty()) {
+            userRepository.deleteById(id);
+        }
+        return "redirect:/admin/students";
+    }
+
+    // --- Staffs Management ---
+    @GetMapping("/staffs")
+    public String manageStaffs(Model model, Principal principal) {
+        if (principal != null) model.addAttribute("username", principal.getName());
+        List<User> allUsers = userRepository.findAll();
+        // Filter users who are STAFF or DRIVER
+        List<User> staffs = allUsers.stream()
+                .filter(u -> u.getRoles() != null && 
+                             (u.getRoles().contains("STAFF") || u.getRoles().contains("DRIVER")))
+                .collect(Collectors.toList());
+        model.addAttribute("staffs", staffs);
+        return "admin/staffs";
+    }
+
+    @PostMapping("/staffs/save")
+    public String saveStaff(
+            @RequestParam(required = false) String id,
+            @RequestParam String fullName,
+            @RequestParam String username,
+            @RequestParam(required = false) String password,
+            @RequestParam String role) {
+
+        User staff;
+        if (id != null && !id.trim().isEmpty()) {
+            staff = userRepository.findById(id).orElse(new User());
+        } else {
+            staff = new User();
+        }
+
+        staff.setFullName(fullName);
+        staff.setUsername(username);
+        
+        // Update roles based on selection
+        Set<String> roles = new HashSet<>();
+        roles.add(role); // expecting "STAFF" or "DRIVER"
+        staff.setRoles(roles);
+        
+        if (password != null && !password.trim().isEmpty()) {
+            staff.setPassword(passwordEncoder.encode(password));
+        } else if (staff.getId() == null) {
+            staff.setPassword(passwordEncoder.encode("123456"));
+        }
+
+        userRepository.save(staff);
+        return "redirect:/admin/staffs";
+    }
+
+    @PostMapping({"/staffs/delete/{id}", "/staffs/delete/", "/staffs/delete"})
+    public String deleteStaff(@PathVariable(required = false) String id) {
+        if (id != null && !id.trim().isEmpty()) {
+            userRepository.deleteById(id);
+        }
+        return "redirect:/admin/staffs";
     }
 }

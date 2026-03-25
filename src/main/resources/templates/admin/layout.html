@@ -175,6 +175,21 @@
                     <i class="bi bi-ticket-perforated me-2"></i>Quản lý Thẻ Buy-Pass</a>
             </div>
         </div>
+
+        <div class="mt-4 mb-2 ps-3 text-white-50 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">QUẢN LÝ NGƯỜI DÙNG</div>
+        <a data-bs-toggle="collapse" href="#userCollapse" role="button" aria-expanded="true" class="nav-link-custom d-flex justify-content-between align-items-center">
+            <span>Quản lý Người Dùng</span>
+            <i class="bi bi-chevron-down" style="font-size: 0.8rem;"></i>
+        </a>
+        
+        <div class="collapse show" id="userCollapse">
+            <div class="admin-submenu">
+                <a href="/admin/students" class="nav-link-custom" th:classappend="${activeMenu == 'students'} ? 'active' : ''">
+                    <i class="bi bi-people-fill me-2"></i>Quản lý Sinh viên</a>
+                <a href="/admin/staffs" class="nav-link-custom" th:classappend="${activeMenu == 'staffs'} ? 'active' : ''">
+                    <i class="bi bi-person-badge-fill me-2"></i>Quản lý Nhân sự</a>
+            </div>
+        </div>
         
         <div style="flex: 1;"></div>
         <a href="#" class="nav-link-custom mt-5">Cài đặt tài khoản</a>

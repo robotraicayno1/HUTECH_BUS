@@ -54,12 +54,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/**").permitAll()
                 // Trang Admin: chỉ ADMIN
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                // Trang Tài xế: chỉ MANAGER
-                .requestMatchers("/driver/**").hasRole("MANAGER")
-                // Trang người dùng: STUDENT và ADMIN
+                // Trang Tài xế: chỉ MANAGER hoặc DRIVER
+                .requestMatchers("/driver/**").hasAnyRole("MANAGER", "DRIVER")
+                // Trang người dùng: STUDENT, ADMIN và STAFF
                 .requestMatchers("/dashboard", "/booking", "/ticket", "/routes",
                                  "/history", "/favorites", "/notifications",
-                                 "/points", "/my-tickets", "/buy-pass").hasAnyRole("STUDENT", "ADMIN")
+                                 "/points", "/my-tickets", "/buy-pass").hasAnyRole("STUDENT", "ADMIN", "STAFF")
                 // Mọi request còn lại phải đăng nhập
                 .anyRequest().authenticated()
             )
