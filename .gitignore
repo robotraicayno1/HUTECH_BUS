@@ -34,3 +34,5 @@ build/
 *.log
 build_output.txt
 target/
+*.log
+*.txt
