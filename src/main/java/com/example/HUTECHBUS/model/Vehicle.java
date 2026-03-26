@@ -27,10 +27,4 @@ public class Vehicle {
 
     /** ID của tuyến xe đang chạy, có thể null nếu xe chưa được phân công */
     private String routeId;
-
-    /** ID của tài xế được phân công (username) */
-    private String driverId;
-
-    /** Tên đầy đủ của tài xế được phân công */
-    private String driverName;
 }

@@ -6,7 +6,6 @@ import com.example.HUTECHBUS.model.Route;
 import com.example.HUTECHBUS.model.Ticket;
 import com.example.HUTECHBUS.model.TripHistory;
 import com.example.HUTECHBUS.model.User;
-import com.example.HUTECHBUS.model.Vehicle;
 import com.example.HUTECHBUS.repository.ActiveTripMongoRepository;
 import com.example.HUTECHBUS.repository.NotificationRepository;
 import com.example.HUTECHBUS.repository.RouteRepository;
@@ -14,7 +13,6 @@ import com.example.HUTECHBUS.repository.TicketMongoRepository;
 import com.example.HUTECHBUS.repository.TripHistoryRepository;
 import com.example.HUTECHBUS.repository.TicketPassRepository;
 import com.example.HUTECHBUS.repository.UserRepository;
-import com.example.HUTECHBUS.repository.VehicleRepository;
 import com.example.HUTECHBUS.model.TicketPass;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -56,9 +54,6 @@ public class DriverApiController {
     @Autowired
     private TicketMongoRepository ticketMongoRepository;
 
-    @Autowired
-    private VehicleRepository vehicleRepository;
-
     @GetMapping("/active")
     public ResponseEntity<?> getActiveTrip(Principal principal) {
         if (principal == null) return ResponseEntity.status(401).body("Unauthorized");
@@ -83,36 +78,9 @@ public class DriverApiController {
 
         ActiveTrip newTrip = new ActiveTrip();
         newTrip.setDriverId(driverId);
-
-        // Fetch driver's full name
-        userRepository.findByUsername(driverId).ifPresent(user -> {
-            newTrip.setDriverName(user.getFullName());
-        });
-
         newTrip.setRouteId(routeId);
         newTrip.setRouteName(routeOpt.get().getName());
         newTrip.setStartTime(LocalDateTime.now());
-
-        // Tìm xe của tuyến này để lấy sức chứa
-        String vehicleId = payload.get("vehicleId");
-        Optional<Vehicle> vehicleOpt = Optional.empty();
-        if (vehicleId != null && !vehicleId.isEmpty()) {
-            vehicleOpt = vehicleRepository.findById(vehicleId);
-        } else {
-            // Lấy đại một xe đầu tiên của tuyến này
-            List<Vehicle> vehicles = vehicleRepository.findByRouteId(routeId);
-            if (!vehicles.isEmpty()) {
-                vehicleOpt = Optional.of(vehicles.get(0));
-            }
-        }
-
-        if (vehicleOpt.isPresent()) {
-            Vehicle v = vehicleOpt.get();
-            newTrip.setVehicleId(v.getId());
-            newTrip.setVehicleLicensePlate(v.getLicensePlate());
-            newTrip.setTotalSeats(v.getCapacity());
-        }
-
         newTrip.getLockedSeats().clear();
         newTrip.getPassengerSeats().clear();
 
@@ -269,11 +237,11 @@ public class DriverApiController {
                 newCheckIn = true;
             }
         }
-
+        
         if (!newCheckIn) {
             return ResponseEntity.badRequest().body("Sinh vien nay da check-in tat ca cac ghe.");
         }
-
+        
         trip.setCheckedInSeats(checkedIn);
         ActiveTrip saved = activeTripRepository.save(trip);
 
@@ -328,10 +296,5 @@ public class DriverApiController {
     @GetMapping("/routes")
     public ResponseEntity<?> getRoutes() {
         return ResponseEntity.ok(routeRepository.findAll());
-    }
-
-    @GetMapping("/vehicles/{routeId}")
-    public ResponseEntity<?> getVehiclesByRoute(@PathVariable String routeId) {
-        return ResponseEntity.ok(vehicleRepository.findByRouteId(routeId));
     }
 }

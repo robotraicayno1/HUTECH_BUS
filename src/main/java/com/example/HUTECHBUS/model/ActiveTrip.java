@@ -32,15 +32,6 @@ public class ActiveTrip {
     /** ID của tài xế/lơ xe phụ trách chuyến này */
     private String driverId;
 
-    /** Tên đầy đủ của tài xế phụ trách */
-    private String driverName;
-
-    /** ID của xe đang chạy */
-    private String vehicleId;
-
-    /** Biển số xe cho nhanh (VD: "51B-123.45") */
-    private String vehicleLicensePlate;
-
     /** Tổng số ghế trên xe (VD: 45) */
     private int totalSeats = 45;
 
@@ -55,9 +46,6 @@ public class ActiveTrip {
 
     /** Lưu ánh xạ username -> điểm đón đã chọn */
     private Map<String, String> passengerPickupPoints = new HashMap<>();
-
-    /** Lưu ánh xạ username -> điểm đến đã chọn */
-    private Map<String, String> passengerDropoffPoints = new HashMap<>();
 
     /** Danh sách các ghế đặt online bằng Tiền mặt (chưa trả tiền) */
     private List<Integer> onlineUnpaidSeats = new ArrayList<>();

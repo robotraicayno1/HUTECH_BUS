@@ -13,7 +13,4 @@ public interface ActiveTripMongoRepository extends MongoRepository<ActiveTrip, S
     
     // Tìm tất cả chuyến đang chạy thuộc một tuyến nhất định
     List<ActiveTrip> findByRouteIdAndStatus(String routeId, String status);
-
-    // Tìm tất cả chuyến theo trạng thái
-    List<ActiveTrip> findByStatus(String status);
 }
