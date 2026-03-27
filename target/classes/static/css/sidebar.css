@@ -1,0 +1,290 @@
+/* =====================================================
+   HUTECHBUS - Shared Design System & Sidebar Styles
+   Bảng màu chuẩn dùng chung cho toàn bộ ứng dụng
+   ===================================================== */
+
+/* ---------- CSS Variables (Design Tokens) ---------- */
+:root {
+    /* Brand Colors */
+    --primary:       #ff6b00;   /* Cam HUTECH */
+    --primary-hover: #e65c00;
+    --navy:          #003366;   /* Xanh Navy HUTECH */
+    --success:       #10b981;   /* Xanh lá */
+    --amber:         #f59e0b;   /* Vàng điểm */
+    --danger:        #ef4444;   /* Đỏ */
+
+    /* Layout */
+    --sidebar-width: 260px;
+    --radius:        16px;
+
+    /* Backgrounds */
+    --bg:            #f4f6fb;   /* Nền trang sáng */
+    --card-bg:       #ffffff;
+    --card-shadow:   0 2px 16px rgba(0, 0, 0, 0.07);
+
+    /* Typography */
+    --text-main:     #1a1a2e;
+    --text-muted:    #888888;
+    --border-color:  rgba(0, 0, 0, 0.07);
+}
+
+/* ---------- CSS Reset ---------- */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* ---------- App Shell ---------- */
+body {
+    display: flex;
+    height: 100vh;
+    background: var(--bg);
+    color: var(--text-main);
+    overflow: hidden;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--navy);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 18px;
+    gap: 4px;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.sidebar-logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -1px;
+    margin-bottom: 28px;
+    padding: 0 8px;
+}
+
+.sidebar-logo span {
+    color: var(--primary);
+}
+
+.nav-section-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.35);
+    text-transform: uppercase;
+    padding: 12px 10px 4px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    color: rgba(255, 255, 255, 0.65);
+    text-decoration: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.nav-link.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 107, 0, 0.35);
+}
+
+.nav-icon {
+    font-size: 1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ---------- Main Content Area ---------- */
+.main-content {
+    flex: 1;
+    padding: 32px 36px;
+    overflow-y: auto;
+}
+
+/* ---------- Page Header ---------- */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.page-header-left p {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+}
+
+.page-header-left h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--navy);
+}
+
+/* ---------- Shared Card ---------- */
+.content-card {
+    background: var(--card-bg);
+    padding: 24px;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+}
+
+.content-card h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* ---------- User Badge ---------- */
+.user-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+}
+
+/* ---------- Buttons ---------- */
+.btn-logout {
+    background: #fee2e2;
+    color: #dc2626;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.btn-logout:hover {
+    background: #fecaca;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+}
+
+/* ---------- Status Badges ---------- */
+.status-badge {
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-completed, .status-active {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-cancelled, .status-used {
+    background: #ffebee;
+    color: #c62828;
+}
+
+/* ---------- Notification Banner ---------- */
+.notif-banner {
+    background: linear-gradient(90deg, var(--primary), #ff8c38);
+    color: white;
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.notif-banner.hidden {
+    display: none;
+}
+
+/* ---------- Section Title ---------- */
+.section-title {
+    font-size: 1.4rem;
+    color: var(--navy);
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+/* ---------- Toast ---------- */
+#toast {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 10px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1000;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 30px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.5s, bottom 0.5s;
+}
+
+#toast.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 50px;
+}

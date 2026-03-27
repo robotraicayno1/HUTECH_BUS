@@ -355,7 +355,6 @@ public class DataSeeder {
             adminV2.setStatus("ACTIVE");
             adminV2.setAcquiredDate(LocalDateTime.now());
             userVoucherRepository.save(adminV2);
-
             } // Kết thúc if (stopRepository.count() == 0)
         };
     }

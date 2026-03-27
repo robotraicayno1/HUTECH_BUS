@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECHBUS - Thông báo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <style>
+        body { overflow: hidden; }
+        .main-content { overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 1.6rem; font-weight: 700; color: var(--navy); }
+        .noti-list { display: flex; flex-direction: column; gap: 15px; }
+        .noti-card { background: var(--card-bg); padding: 20px; border-radius: 15px; box-shadow: var(--card-shadow); border-left: 4px solid var(--border-color); }
+        .noti-card.unread { border-left-color: var(--primary); background: #fffcf9; }
+        .noti-card h4 { font-size: 1rem; color: var(--navy); margin-bottom: 5px; }
+        .noti-card p { font-size: 0.9rem; color: var(--text-muted); }
+        .noti-time { font-size: 0.75rem; color: #aaa; margin-top: 10px; text-align: right; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo">HUTECH<span>BUS</span></div>
+        <div class="nav-section-label">Chính</div>
+        <a href="/dashboard" class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="/routes" class="nav-link"><span class="nav-icon">🚌</span> Tra cứu &amp; Đặt chỗ</a>
+        <a href="/my-tickets" class="nav-link"><span class="nav-icon">🎫</span> Vé của tôi</a>
+        <div class="nav-section-label">Thẻ &amp; Điểm</div>
+        <a href="/buy-pass" class="nav-link"><span class="nav-icon">💳</span> Mua Thẻ Vé Định Kỳ</a>
+        <a href="/points" class="nav-link"><span class="nav-icon">🎯</span> H-Point &amp; Voucher</a>
+        <div class="nav-section-label">Thông tin</div>
+        <a href="/history" class="nav-link"><span class="nav-icon">📋</span> Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link"><span class="nav-icon">❤️</span> Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link active"><span class="nav-icon">🔔</span> Thông báo</a>
+
+        <div class="sidebar-footer"><a href="#" class="nav-link"><span class="nav-icon">⚙️</span> Cài đặt tài khoản</a></div>
+    </aside>
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <p style="color: #888; font-size: 0.9rem;">Cập nhật tin tức và thông báo mới nhất</p>
+                <h1>Thông báo</h1>
+            </div>
+        </div>
+
+        <div class="noti-list">
+            <div class="noti-card unread">
+                <h4>🎉 Cập nhật Tuyến xe bus 167 mới!</h4>
+                <p>Hệ thống vừa cập nhật tuyến 167 kết nối ĐH Nông Lâm và Khu CNC. Các bạn có thể tra cứu ngay trên app.</p>
+                <div class="noti-time">Vừa xong</div>
+            </div>
+            <div class="noti-card">
+                <h4>⚠️ Thay đổi lộ trình Tuyến 01</h4>
+                <p>Do sự kiện tại cơ sở A, Tuyến 01 sẽ dời trạm đón sang đường Ung Văn Khiêm trong ngày 21/03.</p>
+                <div class="noti-time">2 giờ trước</div>
+            </div>
+            <div class="noti-card">
+                <h4>✅ Đăng ký thẻ thành công</h4>
+                <p>Chào mừng bạn đến với HUTECHBUS. Thẻ ảo của bạn đã sẵn sàng để check-in.</p>
+                <div class="noti-time">Hôm qua</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function toggleAdminMenu() {
+            var menu = document.getElementById('adminMenu');
+            var icon = document.getElementById('adminToggleIcon');
+            if (menu.style.display === 'none') {
+                menu.style.display = 'flex';
+                icon.innerText = '▲';
+            } else {
+                menu.style.display = 'none';
+                icon.innerText = '▼';
+            }
+        }
+    </script>
+</body>
+</html>
