@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECH BUS - Vé Đã Đặt</title>
+    <!-- Unified sidebar styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/booking.css}">
+    <style>
+        body { overflow: hidden; }
+        .page-content { flex: 1; overflow-y: auto; background: var(--bg); }
+    </style>
+    <style>
+        /* Tùy chỉnh CSS riêng cho trang danh sách vé */
+        .ticket-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2.5rem;
+        }
+        .ticket-item {
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .ticket-item:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(245, 158, 11, 0.2);
+            border-color: var(--primary); /* Làm sáng viền khi rà chuột */
+        }
+        /* Cấu trúc header của từng vé nhỏ */
+        .ticket-item-header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+        .ticket-id {
+            color: var(--primary);
+            font-family: monospace;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+        /* Giao diện trạng thái khi chưa có tính năng */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+            grid-column: 1 / -1;
+        }
+        .empty-state h3 {
+            color: var(--text-main);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        /* Trang trí biểu tượng vé */
+        .ticket-icon {
+            position: absolute;
+            bottom: -20px;
+            right: -10px;
+            font-size: 6rem;
+            opacity: 0.05;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <link rel="stylesheet" th:href="@{/css/booking.css}">
+    <aside class="sidebar">
+        <div class="sidebar-logo">HUTECH<span>BUS</span></div>
+        <div class="nav-section-label">Chính</div>
+        <a href="/dashboard" class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="/routes" class="nav-link"><span class="nav-icon">🚌</span> Tra cứu &amp; Đặt chỗ</a>
+        <a href="/my-tickets" class="nav-link active"><span class="nav-icon">🎫</span> Vé của tôi</a>
+        <div class="nav-section-label">Thẻ &amp; Điểm</div>
+        <a href="/buy-pass" class="nav-link"><span class="nav-icon">💳</span> Mua Thẻ Vé Định Kỳ</a>
+        <a href="/points" class="nav-link"><span class="nav-icon">🎯</span> H-Point &amp; Voucher</a>
+        <div class="nav-section-label">Thông tin</div>
+        <a href="/history" class="nav-link"><span class="nav-icon">📋</span> Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link"><span class="nav-icon">❤️</span> Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link"><span class="nav-icon">🔔</span> Thông báo</a>
+
+        <div class="sidebar-footer"><a href="/dashboard" class="nav-link"><span class="nav-icon">⚙️</span> Cài đặt tài khoản</a></div>
+    </aside>
+
+    <div class="page-content">
+    <div class="app-container" style="min-height:100%;">
+    <div class="app-container">
+        <!-- Header điều hướng phía trên -->
+        <header class="glass-header">
+            <div class="logo">
+                <h1>HUTECH<span>BUS</span></h1>
+            </div>
+            <div>
+                <!-- Các liên kết điều hướng mượt mà -->
+                <a href="/routes" class="btn-back" style="margin-right: 20px;">Tuyến xe</a>
+                <a href="/booking" class="btn-back" style="color: var(--text-main); font-weight: bold;">⊕ Đặt vé mới</a>
+            </div>
+        </header>
+
+        <main style="padding: 2.5rem 0;">
+            <div th:if="${activePass != null}" 
+                 style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 1.5rem; border-radius: 15px; color: white; margin-bottom: 2rem; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2); position: relative; overflow: hidden;">
+                <div style="position: absolute; right: -20px; top: -20px; font-size: 8rem; opacity: 0.1;">🎫</div>
+                <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; opacity: 0.9;">Thẻ Thành Viên Đang Hoạt Động</h3>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <h2 style="font-size: 1.8rem; font-weight: 800; margin-bottom: 0.2rem;" 
+                            th:text="${activePass.type == 'WEEK' ? 'THẺ TUẦN' : (activePass.type == 'MONTH' ? 'THẺ THÁNG' : 'THẺ NĂM')}">THẺ THÁNG</h2>
+                        <p style="font-size: 0.9rem; opacity: 0.8;">
+                            Hạn sử dụng: <b th:text="${#temporals.format(activePass.expiryDate, 'dd/MM/yyyy')}">31/12/2026</b>
+                        </p>
+                        <a href="/buy-pass" style="display: inline-block; margin-top: 10px; background: rgba(255,255,255,0.2); color: white; padding: 6px 15px; border-radius: 10px; text-decoration: none; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(255,255,255,0.3);">
+                            🔃 Gia hạn / Nâng cấp
+                        </a>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">
+                        ACTIVE ✅
+                    </div>
+                </div>
+            </div>
+
+            <h2 style="color: var(--primary); font-size: 1.8rem;">Lịch Sử Chuyến Đi Của Bạn</h2>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Nhấn vào thẻ vé bất kỳ để xem lại Mã QR Check-in.</p>
+            
+            <!-- Khu vực danh sách vé động -->
+            <div class="ticket-list" id="ticket-list-container">
+                <!-- Javascript sẽ nối danh sách vé vào thẻ này -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Script nạp dữ liệu vé đã lưu tại Client -->
+    <script th:src="@{/js/my-tickets.js}"></script>
+</body>
+</html>

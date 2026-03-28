@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content, title, activeMenu)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">HUTECHBUS Admin Dashboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #ff6b00;
+            --secondary-color: #003366;
+            --bg-color: #f0f2f5;
+            --card-shadow: 0 4px 25px rgba(0,0,0,0.08);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* Sidebar Styling from index.html */
+        .sidebar {
+            width: 280px;
+            background: var(--secondary-color);
+            color: white;
+            padding: 35px 25px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        
+        .sidebar h2 {
+            font-size: 1.6rem;
+            margin-bottom: 50px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-top: 0;
+        }
+        
+        .sidebar h2 span {
+            color: var(--primary-color);
+        }
+
+        .nav-link-custom {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .nav-link-custom:hover, .nav-link-custom.active {
+            background: rgba(255,107,0,1);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255,107,0,0.3);
+        }
+
+        /* Main Content */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 40px;
+            background: transparent;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+        
+        .btn-logout {
+            background: #f83a3a;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .btn-logout:hover {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .page-content {
+            padding: 0 40px 30px 40px;
+            flex: 1;
+        }
+        
+        .card-custom {
+            border: none;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            background: white;
+        }
+        
+        /* Dropdown styling */
+        .admin-submenu {
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        .admin-submenu .nav-link-custom {
+            padding: 10px 18px;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>HUTECH<span>BUS</span></h2>
+        
+
+        
+        <div class="mt-4 mb-2 ps-3 text-white-50 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">QUẢN TRỊ ADMIN</div>
+        
+        <a data-bs-toggle="collapse" href="#adminCollapse" role="button" aria-expanded="true" class="nav-link-custom d-flex justify-content-between align-items-center">
+            <span>Tính năng quản lý</span>
+            <i class="bi bi-chevron-down" style="font-size: 0.8rem;"></i>
+        </a>
+        
+        <div class="collapse show" id="adminCollapse">
+            <div class="admin-submenu">
+                <a href="/admin/dashboard" class="nav-link-custom" th:classappend="${activeMenu == 'dashboard'} ? 'active' : ''">
+                    <i class="bi bi-speedometer2 me-2"></i>Tổng quan</a>
+                <a href="/admin/vehicles" class="nav-link-custom" th:classappend="${activeMenu == 'vehicles'} ? 'active' : ''">
+                    <i class="bi bi-bus-front me-2"></i>Quản lý Xe Bus</a>
+                <a href="/admin/routes" class="nav-link-custom" th:classappend="${activeMenu == 'routes'} ? 'active' : ''">
+                    <i class="bi bi-map me-2"></i>Quản lý Tuyến</a>
+                <a href="/admin/stops" class="nav-link-custom" th:classappend="${activeMenu == 'stops'} ? 'active' : ''">
+                    <i class="bi bi-geo-alt me-2"></i>Quản lý Trạm dừng</a>
+                <a href="/admin/vouchers" class="nav-link-custom" th:classappend="${activeMenu == 'vouchers'} ? 'active' : ''">
+                    <i class="bi bi-gift me-2"></i>Quản lý Voucher</a>
+                <a href="/admin/buy-pass" class="nav-link-custom" th:classappend="${activeMenu == 'buy-pass'} ? 'active' : ''">
+                    <i class="bi bi-ticket-perforated me-2"></i>Quản lý Thẻ Buy-Pass</a>
+            </div>
+        </div>
+        
+        <div style="flex: 1;"></div>
+        <a href="#" class="nav-link-custom mt-5">Cài đặt tài khoản</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <div class="header">
+            <div>
+                <p style="color: #888; font-size: 0.9rem; margin-bottom: 0;">Quản trị hệ thống HUTECHBUS,</p>
+                <h1 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 0;">Admin Dashboard</h1>
+            </div>
+            <div class="user-profile">
+                <div class="user-avatar" th:text="${username != null ? username : 'AD'}">AD</div>
+                <form th:action="@{/logout}" method="post" style="margin: 0; padding: 0;">
+                    <button type="submit" class="btn-logout" style="border: none; cursor: pointer;">Đăng xuất</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="page-content">
+            <div th:replace="${content}"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

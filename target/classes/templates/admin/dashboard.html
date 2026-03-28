@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{admin/layout :: layout(~{::div}, 'Tổng quan - Admin', 'dashboard')}">
+<body>
+    <div>
+        <h2 class="mb-4 d-flex justify-content-between align-items-center">
+            Tổng Quan Hệ Thống
+            <button class="btn btn-outline-primary"><i class="bi bi-arrow-clockwise"></i> Làm mới</button>
+        </h2>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card card-custom p-4 border-start border-4 border-primary h-100">
+                    <h5 class="text-muted mb-2"><i class="bi bi-bus-front"></i> TỔNG SỐ XE BUS</h5>
+                    <h2 class="display-5 fw-bold text-dark mb-0" th:text="${vehicleCount}">0</h2>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card card-custom p-4 border-start border-4 border-success h-100">
+                    <h5 class="text-muted mb-2"><i class="bi bi-map"></i> TỔNG SỐ TUYẾN ĐƯỜNG</h5>
+                    <h2 class="display-5 fw-bold text-dark mb-0" th:text="${routeCount}">0</h2>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card card-custom p-4 border-start border-4 border-info h-100">
+                    <h5 class="text-muted mb-2"><i class="bi bi-geo-alt"></i> TỔNG SỐ TRẠM DỪNG</h5>
+                    <h2 class="display-5 fw-bold text-dark mb-0" th:text="${stopCount}">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- HUTECH BUS Traffic Chart -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card card-custom p-4 shadow-sm border-0">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow text-primary me-2"></i> Lưu lượng hành khách (7 ngày gần nhất)</h5>
+                        <span class="badge bg-light text-primary border border-primary">Live Data</span>
+                    </div>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="trafficChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-custom p-4">
+                    <h5><i class="bi bi-info-circle-fill text-primary"></i> Hướng dẫn Admin</h5>
+                    <p class="mb-1 text-muted">Chào mừng bạn đến với trang quản trị HUTECHBUS.</p>
+                    <ul class="text-muted list-unstyled mt-2 ms-3">
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Quản lý danh sách Xe bus và trạng thái hoạt động.</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Thêm, sửa, xóa các Tuyến đường trong hệ thống.</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Quản lý tọa độ các Trạm dừng để vẽ bản đồ lộ trình chính xác.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script vẽ biểu đồ -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script th:inline="javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+                const ctx = document.getElementById('trafficChart').getContext('2d');
+                
+                // Lấy dữ liệu từ Model Spring Boot
+                const labels = /*[[${chartLabels}]]*/ [];
+                const values = /*[[${chartValues}]]*/ [];
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Số lượng hành khách',
+                            data: values,
+                            backgroundColor: 'rgba(255, 107, 0, 0.1)',
+                            borderColor: '#ff6b00',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#ff6b00',
+                            pointBorderColor: '#fff',
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    drawBorder: false,
+                                    color: 'rgba(0,0,0,0.05)'
+                                },
+                                ticks: {
+                                    precision: 0
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>

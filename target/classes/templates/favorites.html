@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECHBUS - Yêu thích</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <style>
+        body { overflow: hidden; }
+        .main-content { overflow-y: auto; }
+        .fav-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .fav-card { background: var(--card-bg); padding: 25px; border-radius: 20px; box-shadow: var(--card-shadow); display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s; }
+        .fav-card:hover { transform: translateY(-2px); }
+        .route-info h4 { font-size: 1.1rem; color: var(--navy); }
+        .route-info p { font-size: 0.9rem; color: var(--text-muted); margin-top: 5px; }
+        .fav-icon { color: #ff4d4d; font-size: 1.5rem; cursor: pointer; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 1.6rem; font-weight: 700; color: var(--navy); }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo">HUTECH<span>BUS</span></div>
+        <div class="nav-section-label">Chính</div>
+        <a href="/dashboard" class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="/routes" class="nav-link"><span class="nav-icon">🚌</span> Tra cứu &amp; Đặt chỗ</a>
+        <a href="/my-tickets" class="nav-link"><span class="nav-icon">🎫</span> Vé của tôi</a>
+        <div class="nav-section-label">Thẻ &amp; Điểm</div>
+        <a href="/buy-pass" class="nav-link"><span class="nav-icon">💳</span> Mua Thẻ Vé Định Kỳ</a>
+        <a href="/points" class="nav-link"><span class="nav-icon">🎯</span> H-Point &amp; Voucher</a>
+        <div class="nav-section-label">Thông tin</div>
+        <a href="/history" class="nav-link"><span class="nav-icon">📋</span> Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link active"><span class="nav-icon">❤️</span> Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link"><span class="nav-icon">🔔</span> Thông báo</a>
+
+        <div class="sidebar-footer"><a href="#" class="nav-link"><span class="nav-icon">⚙️</span> Cài đặt tài khoản</a></div>
+    </aside>
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <p style="color: #888; font-size: 0.9rem;">Các tuyến và trạm bạn thường xuyên sử dụng</p>
+                <h1>Đã lưu / Yêu thích</h1>
+            </div>
+        </div>
+
+        <div class="fav-grid">
+            <div th:each="route : ${routes}" class="fav-card" th:onclick="|location.href='/routes'|" style="cursor: pointer;">
+                <div class="route-info">
+                    <h4 th:text="${route.name}">Tên tuyến</h4>
+                    <p th:text="${route.description}">Mô tả</p>
+                </div>
+                <div class="fav-icon">❤️</div>
+            </div>
+            <div th:if="${#lists.isEmpty(routes)}" style="grid-column: span 2; text-align: center; padding: 50px; color: #888;">
+                <p>Bạn chưa lưu tuyến xe nào. Hãy vào mục "Tra cứu lộ trình" để lưu các tuyến thường dùng nhé!</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        function toggleAdminMenu() {
+            var menu = document.getElementById('adminMenu');
+            var icon = document.getElementById('adminToggleIcon');
+            if (menu.style.display === 'none') {
+                menu.style.display = 'flex';
+                icon.innerText = '▲';
+            } else {
+                menu.style.display = 'none';
+                icon.innerText = '▼';
+            }
+        }
+    </script>
+</body>
+</html>

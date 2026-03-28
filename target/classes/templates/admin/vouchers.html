@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{admin/layout :: layout(~{::div}, 'Quan ly Voucher', 'vouchers')}">
+<body>
+    <div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Quan ly Voucher &amp; H-Point</h2>
+            <button class="btn btn-warning fw-bold" data-bs-toggle="modal" data-bs-target="#voucherModal" onclick="clearVoucherForm()">
+                <i class="bi bi-plus-circle"></i> Them Voucher
+            </button>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-0" id="voucherTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#pane-list" type="button">
+                    <i class="bi bi-gift"></i> Danh sach Voucher
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#pane-history" type="button">
+                    <i class="bi bi-clock-history"></i> Lich su doi Voucher
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content card-custom p-4" style="border-top-left-radius:0;">
+
+            <!-- TAB 1: Danh sach Voucher -->
+            <div class="tab-pane fade show active" id="pane-list" role="tabpanel">
+                <div class="d-flex justify-content-between mb-3 mt-2">
+                    <span class="text-muted">Tong cong: <strong th:text="${#lists.size(vouchers)}">0</strong> voucher</span>
+                    <span class="text-muted">Da doi: <strong th:text="${#lists.size(userVouchers)}">0</strong> luot</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Ten Voucher</th>
+                                <th>Loai ve ap dung</th>
+                                <th>Diem can doi</th>
+                                <th>Giam gia (VND)</th>
+                                <th class="text-end">Hanh dong</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="v, stat : ${vouchers}">
+                                <td th:text="${stat.count}"></td>
+                                <td class="fw-bold" th:text="${v.name}"></td>
+                                <td th:text="${v.ticketType}"></td>
+                                <td th:text="${v.pointCost} + ' diem'"></td>
+                                <td th:text="${v.discountAmount}"></td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-warning me-2"
+                                            th:attr="data-id=${v.id}, data-name=${v.name}, data-type=${v.ticketType}, data-point=${v.pointCost}, data-discount=${v.discountAmount}"
+                                            onclick="editVoucherFromBtn(this)">
+                                        <i class="bi bi-pencil"></i> Sua
+                                    </button>
+                                    <form th:action="@{/admin/vouchers/delete/{id}(id=${v.id})}" method="post" class="d-inline"
+                                          onsubmit="return confirm('Xoa voucher nay?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Xoa
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(vouchers)}">
+                                <td colspan="6" class="text-center text-muted py-5">Chua co voucher nao.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 2: Lich su doi Voucher -->
+            <div class="tab-pane fade" id="pane-history" role="tabpanel">
+                <div class="mt-2 table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>User ID</th>
+                                <th>Ten Voucher</th>
+                                <th>Loai ve</th>
+                                <th>Giam gia</th>
+                                <th>Ngay doi</th>
+                                <th>Trang thai</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="uv, stat : ${userVouchers}">
+                                <td th:text="${stat.count}"></td>
+                                <td>
+                                    <span class="fw-semibold" th:text="${userMap[uv.userId] != null ? userMap[uv.userId] : uv.userId}"></span>
+                                </td>
+                                <td th:text="${uv.voucherName}"></td>
+                                <td th:text="${uv.ticketType}"></td>
+                                <td th:text="${uv.discountAmount}"></td>
+                                <td th:text="${uv.acquiredDate != null ? #temporals.format(uv.acquiredDate, 'dd/MM/yyyy HH:mm') : '-'}"></td>
+                                <td th:text="${uv.status}"></td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(userVouchers)}">
+                                <td colspan="7" class="text-center text-muted py-5">Chua co lich su doi voucher.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Them / Sua Voucher -->
+        <div class="modal fade" id="voucherModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header text-white" style="background: linear-gradient(135deg,#ff8c00,#ff6b00);">
+                        <h5 class="modal-title"><i class="bi bi-gift"></i> Thong tin Voucher</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{/admin/vouchers/save}" th:object="${newVoucher}" method="post">
+                        <div class="modal-body">
+                            <input type="hidden" id="v_id" name="id" />
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Ten Voucher</label>
+                                <input type="text" class="form-control" id="v_name" name="name" required
+                                       placeholder="VD: Giam gia ve thang 10K">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Loai ve ap dung</label>
+                                <select class="form-select" id="v_ticketType" name="ticketType">
+                                    <option value="DAILY">Ve ngay (DAILY)</option>
+                                    <option value="MONTHLY">Ve thang (MONTHLY)</option>
+                                    <option value="YEARLY">Ve nam (YEARLY)</option>
+                                </select>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <label class="form-label fw-bold">Diem can doi (H-Point)</label>
+                                    <input type="number" class="form-control" id="v_pointCost" name="pointCost" min="0" required value="100">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-bold">So tien giam (VND)</label>
+                                    <input type="number" class="form-control" id="v_discountAmount" name="discountAmount" min="0" required value="10000">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huy</button>
+                            <button type="submit" class="btn btn-warning text-white fw-bold">
+                                <i class="bi bi-save"></i> Luu Voucher
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function clearVoucherForm() {
+                document.getElementById('v_id').value = '';
+                document.getElementById('v_name').value = '';
+                document.getElementById('v_ticketType').value = 'DAILY';
+                document.getElementById('v_pointCost').value = '100';
+                document.getElementById('v_discountAmount').value = '10000';
+            }
+
+            function editVoucherFromBtn(btn) {
+                document.getElementById('v_id').value = btn.dataset.id;
+                document.getElementById('v_name').value = btn.dataset.name;
+                document.getElementById('v_ticketType').value = btn.dataset.type;
+                document.getElementById('v_pointCost').value = btn.dataset.point;
+                document.getElementById('v_discountAmount').value = btn.dataset.discount;
+                var myModal = new bootstrap.Modal(document.getElementById('voucherModal'));
+                myModal.show();
+            }
+        </script>
+    </div>
+</body>
+</html>

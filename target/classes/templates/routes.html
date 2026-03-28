@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUTECHBUS - Tra cứu lộ trình</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { overflow: hidden; }
+        .main-content { flex:1; display:flex; flex-direction:column; }
+        .header { background: var(--card-bg); padding:15px 30px; display:flex; justify-content:space-between; align-items:center; z-index:5; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+        .header h3 { font-size: 1.1rem; font-weight: 700; color: var(--navy); }
+        .map-layout { display:flex; flex:1; overflow: hidden; }
+        .search-panel { width:420px; background: var(--card-bg); padding:25px; overflow-y:auto; box-shadow: 2px 0 15px rgba(0,0,0,0.03); z-index: 2; }
+        .search-panel::-webkit-scrollbar { width: 6px; }
+        .search-panel::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+        #map { flex:1; z-index: 1; }
+        .route-card {
+            padding: 20px; border: 1px solid transparent; border-radius: 16px; margin-bottom: 20px;
+            cursor: pointer; background: var(--card-bg); box-shadow: var(--card-shadow);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative;
+        }
+        .route-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); border-color: rgba(255,107,0,0.3); }
+        .route-title { font-size: 1.1rem; color: var(--navy); margin-bottom: 5px; }
+        .route-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+        .action-btn {
+            padding: 10px 22px; background: linear-gradient(135deg, var(--primary), #ff8c00);
+            color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
+            cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(255, 107, 0, 0.25);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 107, 0, 0.35); }
+        .hpoint-badge {
+            display: flex; align-items: center; gap: 5px; padding: 8px 14px;
+            background: rgba(255, 107, 0, 0.08); color: var(--primary); border-radius: 10px;
+            font-size: 0.85rem; font-weight: 700; border: 1px solid rgba(255, 107, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo">HUTECH<span>BUS</span></div>
+
+        <div class="nav-section-label">Chính</div>
+        <a href="/dashboard" class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="/routes" class="nav-link active"><span class="nav-icon">🚌</span> Tra cứu &amp; Đặt chỗ</a>
+        <a href="/my-tickets" class="nav-link"><span class="nav-icon">🎫</span> Vé của tôi</a>
+
+        <div class="nav-section-label">Thẻ &amp; Điểm</div>
+        <a href="/buy-pass" class="nav-link"><span class="nav-icon">💳</span> Mua Thẻ Vé Định Kỳ</a>
+        <a href="/points" class="nav-link"><span class="nav-icon">🎯</span> H-Point &amp; Voucher</a>
+
+        <div class="nav-section-label">Thông tin</div>
+        <a href="/history" class="nav-link"><span class="nav-icon">📋</span> Lịch sử chuyến đi</a>
+        <a href="/favorites" class="nav-link"><span class="nav-icon">❤️</span> Đã lưu / Yêu thích</a>
+        <a href="/notifications" class="nav-link"><span class="nav-icon">🔔</span> Thông báo</a>
+
+
+
+        <div class="sidebar-footer">
+            <a href="#" class="nav-link"><span class="nav-icon">⚙️</span> Cài đặt tài khoản</a>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <div class="header">
+            <h3>Tra cứu lộ trình</h3>
+            <div>Chào, <span th:text="${username != null ? username : 'HT-User'}">User</span></div>
+        </div>
+        <div class="map-layout">
+            <div class="search-panel">
+                <input type="text" placeholder="Tìm kiếm tuyến xe..." style="width:100%; padding:10px; margin-bottom:20px; border-radius:8px; border:1px solid #ddd;">
+                <div id="routeList">
+                    <div th:each="route : ${routes}" class="route-card" 
+                         th:attr="data-id=${route.id}" 
+                         onclick="handleSelectRoute(this.getAttribute('data-id'))">
+                        <h4 class="route-title" th:text="${route.name}">Route Name</h4>
+                        <p class="route-desc" th:text="${route.description}">Desc</p>
+                        
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:10px; margin-bottom:15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px;">
+                            <div style="display:flex; align-items:center;">
+                                <div th:style="|width:12px; height:12px; border-radius:50%; background:${route.colorCode != null ? route.colorCode : '#ccc'}; margin-right:8px; box-shadow: 0 0 5px ${route.colorCode != null ? route.colorCode : '#ccc'}|"></div>
+                                <span style="font-size:0.8rem; font-weight:500; color:#888;"><i class="fa-solid fa-bus-simple" style="margin-right:4px;"></i> Tuyến xe bus nội khu</span>
+                            </div>
+                            <div th:unless="${route.hasActiveTrip}" style="font-size:0.7rem; color:#bbb; font-style:italic;">
+                                <i class="fa-solid fa-clock"></i> Chờ chuyến tiếp
+                            </div>
+                        </div>
+
+                        <!-- Bus Options Selection Area (From assigned vehicles in DB) -->
+                        <div class="active-trips-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom: 15px;">
+                            <div th:each="bus : ${route.busOptions}" class="trip-item"
+                                 th:attr="onclick=|handleTripSelect('${bus.tripId}', '${route.id}', '${bus.vehicleId}'); event.stopPropagation();|"
+                                 style="display:flex; justify-content:space-between; align-items:center; padding: 8px 12px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.2s;"
+                                 th:styleappend="${bus.vehicleStatus != 'Hoạt động' ? 'opacity: 0.6; cursor: not-allowed; pointer-events: none;' : ''}">
+                                
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div style="font-size: 0.7rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;"
+                                         th:styleappend="${bus.hasActiveTrip ? 'background: #475569; color: white;' : 'background: #e2e8f0; color: #64748b; border: 1px dashed #cbd5e1;'}">
+                                        <span th:text="${bus.licensePlate}">PLATE</span>
+                                    </div>
+                                    <span th:if="${bus.hasActiveTrip}" style="font-size: 0.65rem; color: #059669; font-weight: 700; background: #ecfdf5; padding: 1px 5px; border-radius: 3px;">ĐANG CHẠY</span>
+                                    <span th:unless="${bus.hasActiveTrip}" style="font-size: 0.65rem; color: #64748b; font-weight: 500;">SẴN SÀNG</span>
+                                    <span style="font-size: 0.7rem; color: #94a3b8; margin-left: 4px;" th:text="${'| ' + bus.driverName}">| Tài xế</span>
+                                </div>
+                                
+                                <div style="font-size: 0.8rem; font-weight: 700;" th:styleappend="${bus.availableSeats > 5 ? 'color:#059669;' : 'color:#dc2626;'}">
+                                    <span th:text="${bus.availableSeats}">0</span>/<span th:text="${bus.totalSeats}">45</span>
+                                </div>
+                            </div>
+                            
+                            <div th:if="${#lists.isEmpty(route.busOptions)}" style="font-size:0.7rem; color:#bbb; font-style:italic; text-align:center;">
+                                <i class="fa-solid fa-clock"></i> Chưa có xe phân công cho tuyến này
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; padding-top: 5px;">
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <div class="fav-btn" th:attr="data-id=${route.id}" onclick="toggleFavorite(this.getAttribute('data-id'), this); event.stopPropagation();" 
+                                     style="font-size: 1.5rem; cursor: pointer; transition: transform 0.2s; display:flex; align-items:center; justify-content:center; width: 36px; height: 36px; border-radius: 50%; background: #f8f9fa;"
+                                     onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
+                                     <i class="fa-regular fa-heart" style="color:#aaa;"></i>
+                                </div>
+                                <button class="action-btn" th:attr="data-id=${route.id}" onclick="recordTrip(this.getAttribute('data-id')); event.stopPropagation();">
+                                    <i class="fa-solid fa-ticket"></i> Đi ngay
+                                </button>
+                            </div>
+                            <div class="hpoint-badge">
+                                <i class="fa-solid fa-gift"></i> +10 Point
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([10.8231, 106.6297], 12);
+        // Thay đổi sang Google Maps (Roadmap)
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            attribution: '&copy; Google Maps'
+        }).addTo(map);
+        
+        const routeLayer = L.layerGroup().addTo(map);
+
+        async function handleSelectRoute(id) {
+            try {
+                const response = await fetch(`/api/routes/${id}/details`);
+                const data = await response.json();
+                
+                if (!data.route || !data.stops) return;
+
+                routeLayer.clearLayers();
+                
+                const coordinates = data.stops.map(s => [s.longitude, s.latitude]); // OSRM uses [lng, lat]
+                
+                if (coordinates.length > 1) {
+                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordinates.join(';')}?geometries=geojson&overview=full`;
+                    const routeRes = await fetch(osrmUrl);
+                    const routeData = await routeRes.json();
+                    
+                    if (routeData.routes && routeData.routes[0]) {
+                        const geometry = routeData.routes[0].geometry;
+                        const polyline = L.geoJSON(geometry, {
+                            style: {
+                                color: data.route.colorCode || '#ff6b00',
+                                weight: 6,
+                                opacity: 0.8
+                            }
+                        }).addTo(routeLayer);
+
+                        // Add markers
+                        data.stops.forEach((stop) => {
+                            L.marker([stop.latitude, stop.longitude])
+                             .bindPopup(`<b>${stop.name}</b>`)
+                             .addTo(routeLayer);
+                        });
+
+                        map.fitBounds(polyline.getBounds(), { padding: [40, 40] });
+                    }
+                }
+            } catch (err) {
+                console.error("Lỗi khi tải dữ liệu tuyến đường:", err);
+            }
+        }
+        function recordTrip(routeId) {
+            window.location.href = `/booking?routeId=${routeId}`;
+        }
+
+        async function handleTripSelect(tripId, routeId, vehicleId) {
+            // DUCTAI: Record trip and give points
+            try {
+                await fetch(`/api/trips/record/${routeId}`, { method: 'POST' });
+            } catch (err) { console.error(err); }
+            
+            // Redirect with tripId if it exists, otherwise use vehicleId
+            let url = `/booking?routeId=${routeId}`;
+            if (tripId && tripId !== 'null') url += `&tripId=${tripId}`;
+            if (vehicleId && vehicleId !== 'null') url += `&vehicleId=${vehicleId}`;
+            
+            window.location.href = url;
+        }
+
+        async function toggleFavorite(id, el) {
+            try {
+                const res = await fetch(`/api/favorites/toggle/${id}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    el.innerHTML = data.isFavorite ? '<i class="fa-solid fa-heart" style="color:#ff4d4d; font-size: 1.5rem;"></i>' : '<i class="fa-regular fa-heart" style="color:#aaa; font-size: 1.5rem;"></i>';
+                    
+                    if (data.isFavorite) {
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'bottom-end',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true,
+                        });
+                        Toast.fire({ icon: 'success', title: 'Đã lưu vào yêu thích ❤️' });
+                    }
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        // Dropdown toggle logic
+        function toggleAdminMenu() {
+            var menu = document.getElementById('adminMenu');
+            var icon = document.getElementById('adminToggleIcon');
+            if (menu.style.display === 'none') {
+                menu.style.display = 'flex';
+                icon.innerText = '▲';
+            } else {
+                menu.style.display = 'none';
+                icon.innerText = '▼';
+            }
+        }
+    </script>
+</body>
+</html>
