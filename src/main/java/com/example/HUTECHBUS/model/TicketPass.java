@@ -7,7 +7,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
 /**
- * Đại diện cho một thẻ vé định kỳ (Tuần, Tháng, Năm).
+ * Mô hình đại diện cho một thẻ vé định kỳ (Ticket Pass) trong hệ thống HUTECHBUS.
+ * Thẻ này cho phép sinh viên đi xe bus miễn phí không giới hạn trong một khoảng thời gian.
  */
 @Data
 @Document(collection = "TicketPasses")
@@ -16,21 +17,39 @@ public class TicketPass {
     @Id
     private String id;
 
-    /** ID của người dùng sở hữu thẻ */
+    /** 
+     * Tên đăng nhập (username) hoặc ID của sinh viên sở hữu thẻ.
+     * Dùng để kiểm tra quyền lợi khi đặt chỗ.
+     */
     private String userId;
 
-    /** Loại thẻ: WEEK, MONTH, YEAR */
+    /** 
+     * Loại thẻ: 
+     * - WEEK: Thẻ tuần (7 ngày)
+     * - MONTH: Thẻ tháng (30 ngày)
+     * - YEAR: Thẻ năm (365 ngày)
+     */
     private String type;
 
-    /** Ngày mua thẻ */
+    /** Ngày và giờ bắt đầu mua hoặc kích hoạt thẻ. */
     private LocalDateTime purchaseDate;
 
-    /** Ngày hết hạn thẻ */
+    /** 
+     * Ngày và giờ hết hạn của thẻ. 
+     * Sau thời điểm này, thẻ sẽ chuyển sang trạng thái EXPIRED.
+     */
     private LocalDateTime expiryDate;
 
-    /** Giá tiền của thẻ (VNĐ) */
+    /** 
+     * Giá gốc của gói cước tại thời điểm mua (VNĐ).
+     * Lưu lại để phục vụ báo cáo và thống kê.
+     */
     private long price;
 
-    /** Trạng thái thẻ: ACTIVE, EXPIRED */
+    /** 
+     * Trạng thái hiện tại của thẻ:
+     * - ACTIVE: Đang trong thời hạn sử dụng.
+     * - EXPIRED: Đã hết hạn.
+     */
     private String status = "ACTIVE";
 }

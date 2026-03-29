@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +9,16 @@
     <link rel="stylesheet" th:href="@{/css/booking.css}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { overflow: hidden; }
-        .page-content { flex: 1; overflow-y: auto; background: var(--bg); }
+        body {
+            overflow: hidden;
+        }
+
+        .page-content {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--bg);
+        }
+
         .pass-options {
             display: flex;
             flex-wrap: wrap;
@@ -17,6 +26,7 @@
             gap: 20px;
             margin-top: 30px;
         }
+
         .pass-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -30,25 +40,30 @@
             max-width: 350px;
             flex: 1 1 300px;
         }
+
         .pass-card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
         }
+
         .pass-card h3 {
             font-size: 1.5rem;
             margin-bottom: 10px;
             color: var(--primary);
         }
+
         .pass-card .price {
             font-size: 2rem;
             font-weight: 700;
             margin: 20px 0;
             color: var(--navy);
         }
+
         .pass-card .duration {
             color: var(--text-muted);
             margin-bottom: 20px;
         }
+
         .btn-buy {
             background: var(--primary);
             color: white;
@@ -60,7 +75,11 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        .btn-buy:hover { background: var(--primary-hover); }
+
+        .btn-buy:hover {
+            background: var(--primary-hover);
+        }
+
         /* Points info box */
         .points-info-box {
             background: rgba(255, 107, 0, 0.05);
@@ -69,11 +88,21 @@
             border-radius: 12px;
             margin: 20px 0;
         }
-        .points-info-box .label { font-weight: 600; color: var(--text-main); }
-        .points-info-box .value { color: var(--primary); font-size: 1.2rem; font-weight: 700; }
+
+        .points-info-box .label {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .points-info-box .value {
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
     </style>
 
 </head>
+
 <body>
     <aside class="sidebar">
         <div class="sidebar-logo">HUTECH<span>BUS</span></div>
@@ -89,48 +118,70 @@
         <a href="/favorites" class="nav-link"><span class="nav-icon">❤️</span> Đã lưu / Yêu thích</a>
         <a href="/notifications" class="nav-link"><span class="nav-icon">🔔</span> Thông báo</a>
 
-        <div class="sidebar-footer"><a href="#" class="nav-link"><span class="nav-icon">⚙️</span> Cài đặt tài khoản</a></div>
+        <div class="sidebar-footer"><a href="#" class="nav-link"><span class="nav-icon">⚙️</span> Cài đặt tài khoản</a>
+        </div>
     </aside>
 
     <div class="page-content">
         <div class="app-container" style="min-height:100%;">
             <h1 style="text-align: center; color: var(--navy);">Chọn Gói Thẻ Vé Tiết Kiệm</h1>
             <p style="text-align: center; color: var(--text-muted);">Mua một lần, đi thoải mái cả kỳ học!</p>
-            
-            <div style="background: rgba(255,107,0,0.05); border: 1px solid rgba(255,107,0,0.2); padding: 20px; border-radius: 12px; margin: 20px 0; color: var(--text-main);">
+
+            <!-- KHU VỰC NHẬP ĐIỂM H-POINT VÀ VOUCHER -->
+            <div
+                style="background: rgba(255,107,0,0.05); border: 1px solid rgba(255,107,0,0.2); padding: 20px; border-radius: 12px; margin: 20px 0; color: var(--text-main);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <span style="font-weight: 600;">Điểm H-Point của bạn:</span>
-                    <span id="currentPoints" style="color: var(--primary); font-size: 1.2rem; font-weight: 700;" th:text="${hPoints != null ? hPoints : 0}">0</span>
+                    <span id="currentPoints" style="color: var(--primary); font-size: 1.2rem; font-weight: 700;"
+                        th:text="${hPoints != null ? hPoints : 0}">0</span>
                 </div>
+
+                <!-- Nhập số điểm muốn dùng -->
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <span style="font-size: 0.9rem; flex: 1;">Số điểm muốn sử dụng (1 điểm = 100Đ):</span>
-                    <input type="number" id="pointsToUse" value="0" min="0" 
-                           style="width: 100px; padding: 8px; border-radius: 8px; border: 1px solid #ddd; background: white; color: var(--text-main); text-align: center;">
+                    <input type="number" id="pointsToUse" value="0" min="0"
+                        style="width: 100px; padding: 8px; border-radius: 8px; border: 1px solid #ddd; background: white; color: var(--text-main); text-align: center;">
                 </div>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; margin-bottom: 0;">* Điểm sẽ được trừ trực tiếp vào giá vé ngay sau khi xác nhận.</p>
+
+                <!-- Chọn Voucher giảm giá (nếu có) -->
+                <div style="display: flex; gap: 10px; align-items: center; margin-top: 15px;">
+                    <span style="font-size: 0.9rem; flex: 1;">Chọn Voucher giảm giá:</span>
+                    <select id="userVoucher"
+                        style="width: 250px; padding: 8px; border-radius: 8px; border: 1px solid #ddd; background: white; color: var(--text-main);">
+                        <option value="NONE">-- Không dùng voucher --</option>
+                        <option th:each="uv : ${myVouchers}" th:value="${uv.id}" th:data-discount="${uv.discountAmount}"
+                            th:text="${uv.voucherName + ' (-' + #numbers.formatInteger(uv.discountAmount, 0, 'POINT') + 'đ)'}">
+                        </option>
+                    </select>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; margin-bottom: 0;">* Điểm và
+                    Voucher sẽ được trừ trực tiếp vào giá vé ngay sau khi xác nhận.</p>
             </div>
 
-            <div style="background: rgba(255,107,0,0.08); border: 1px solid var(--primary); padding: 15px; border-radius: 12px; margin-top: 20px; color: var(--text-main); display: flex; align-items: center; gap: 15px;">
+            <div
+                style="background: rgba(255,107,0,0.08); border: 1px solid var(--primary); padding: 15px; border-radius: 12px; margin-top: 20px; color: var(--text-main); display: flex; align-items: center; gap: 15px;">
                 <span style="font-size: 1.5rem;">💡</span>
                 <p style="font-size: 0.9rem; margin: 0;">
-                    <b>Tin vui:</b> Nếu bạn đang có thẻ còn hạn, gói mới sẽ tự động <b>cộng dồn thời gian</b>. Bạn sẽ không bị mất bất kỳ ngày sử dụng nào của thẻ cũ!
+                    <b>Tin vui:</b> Nếu bạn đang có thẻ còn hạn, gói mới sẽ tự động <b>cộng dồn thời gian</b>. Bạn sẽ
+                    không bị mất bất kỳ ngày sử dụng nào của thẻ cũ!
                 </p>
             </div>
 
             <!-- Buy New Pass Section -->
             <h2 style="text-align:center; color:var(--navy); margin-top:30px;">Mua Thẻ Vé Mới</h2>
-            <p style="text-align:center; color:var(--text-muted); margin-bottom:20px;">Chọn gói cước phù hợp với nhu cầu của bạn</p>
-            
+            <p style="text-align:center; color:var(--text-muted); margin-bottom:20px;">Chọn gói cước phù hợp với nhu cầu
+                của bạn</p>
+
             <div th:if="${packages == null or #lists.isEmpty(packages)}"
-                 style="text-align:center; padding: 40px; color:var(--text-muted); background: #f8f9fa; border-radius: 12px;">
+                style="text-align:center; padding: 40px; color:var(--text-muted); background: #f8f9fa; border-radius: 12px;">
                 <i class="ti ti-receipt-off fs-1 text-secondary mb-3 d-block"></i>
                 <h5>Trường học hiện chưa mở bán gói cước nào.</h5>
             </div>
 
             <div class="pass-options" th:if="${packages != null and !#lists.isEmpty(packages)}">
                 <div th:each="p : ${packages}" class="pass-card"
-                     th:attr="data-id=${p.id}, data-name=${p.name}, data-price=${p.price}"
-                     onclick="confirmBuyFromCard(this)">
+                    th:attr="data-id=${p.id}, data-name=${p.name}, data-price=${p.price}"
+                    onclick="confirmBuyFromCard(this)">
                     <h3 th:text="${p.name}"></h3>
                     <div class="duration" th:text="${p.description}"></div>
                     <div class="price" th:text="${#numbers.formatInteger(p.price, 0, 'POINT') + ' đ'}"></div>
@@ -143,27 +194,32 @@
             <!-- My Passes from Admin -->
             <div th:if="${myPasses != null and !#lists.isEmpty(myPasses)}">
                 <h2 style="text-align:center; color:var(--navy);">Vé đã mua</h2>
-                <p style="text-align:center; color:var(--text-muted); margin-bottom:20px;">Các thẻ vé định kỳ bạn đang sở hữu</p>
+                <p style="text-align:center; color:var(--text-muted); margin-bottom:20px;">Các thẻ vé định kỳ bạn đang
+                    sở hữu</p>
                 <div class="pass-options">
-                    <div th:each="pass : ${myPasses}"
-                         class="pass-card"
-                         th:style="${pass.status == 'ACTIVE'} ? 'border: 2px solid #ff6b00; cursor: default;' : 'opacity: 0.7; cursor: default;'"
-                         onclick="event.stopPropagation()">
+                    <div th:each="pass : ${myPasses}" class="pass-card"
+                        th:style="${pass.status == 'ACTIVE'} ? 'border: 2px solid #ff6b00; cursor: default;' : 'opacity: 0.7; cursor: default;'"
+                        onclick="event.stopPropagation()">
                         <div th:text="${pass.type == 'WEEK' ? 'Thẻ Tuần' : (pass.type == 'MONTH' ? 'Thẻ Tháng' : 'Thẻ Năm')}"
-                             style="font-size:1.4rem; font-weight:700; color:var(--primary); margin-bottom:8px;"></div>
+                            style="font-size:1.4rem; font-weight:700; color:var(--primary); margin-bottom:8px;"></div>
                         <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;"
-                             th:text="${pass.type == 'WEEK' ? 'Hiệu lực 7 ngày' : (pass.type == 'MONTH' ? 'Hiệu lực 30 ngày' : 'Hiệu lực 1 năm')}"></div>
+                            th:text="${pass.type == 'WEEK' ? 'Hiệu lực 7 ngày' : (pass.type == 'MONTH' ? 'Hiệu lực 30 ngày' : 'Hiệu lực 1 năm')}">
+                        </div>
                         <div style="margin:10px 0; font-size:0.9rem;">
-                            <div><b>Ngày mua:</b> <span th:text="${#temporals.format(pass.purchaseDate, 'dd/MM/yyyy')}"></span></div>
+                            <div><b>Ngày mua:</b> <span
+                                    th:text="${#temporals.format(pass.purchaseDate, 'dd/MM/yyyy')}"></span></div>
                             <div><b>Hết hạn:</b> <span th:text="${#temporals.format(pass.expiryDate, 'dd/MM/yyyy')}"
-                                                        th:style="${pass.status == 'EXPIRED'} ? 'color:red;' : 'color:green;'"></span></div>
-                            <div th:if="${pass.price > 0}"><b>Giá:</b> <span th:text="${#numbers.formatInteger(pass.price, 0, 'POINT') + ' đ'}"></span></div>
+                                    th:style="${pass.status == 'EXPIRED'} ? 'color:red;' : 'color:green;'"></span></div>
+                            <div th:if="${pass.price > 0}"><b>Giá:</b> <span
+                                    th:text="${#numbers.formatInteger(pass.price, 0, 'POINT') + ' đ'}"></span></div>
                         </div>
                         <div style="margin-top:15px;">
                             <span th:if="${pass.status == 'ACTIVE'}"
-                                  style="background:#28a745; color:white; padding:6px 18px; border-radius:20px; font-weight:600; font-size:0.9rem;">✓ Đang hiệu lực</span>
+                                style="background:#28a745; color:white; padding:6px 18px; border-radius:20px; font-weight:600; font-size:0.9rem;">✓
+                                Đang hiệu lực</span>
                             <span th:unless="${pass.status == 'ACTIVE'}"
-                                  style="background:#dc3545; color:white; padding:6px 18px; border-radius:20px; font-weight:600; font-size:0.9rem;">✗ Đã hết hạn</span>
+                                style="background:#dc3545; color:white; padding:6px 18px; border-radius:20px; font-weight:600; font-size:0.9rem;">✗
+                                Đã hết hạn</span>
                         </div>
                     </div>
                 </div>
@@ -171,7 +227,7 @@
 
             <!-- No passes assigned yet -->
             <div th:if="${myPasses == null or #lists.isEmpty(myPasses)}"
-                 style="text-align:center; margin-top:50px; color:var(--text-muted);">
+                style="text-align:center; margin-top:50px; color:var(--text-muted);">
                 <div style="font-size:4rem; margin-bottom:15px;">🎫</div>
                 <h3 style="color:var(--navy);">Bạn hiện tại chưa có loại thẻ nào</h3>
                 <p>Hãy chọn mua một gói cước phía trên để bắt đầu sử dụng dịch vụ.</p>
@@ -180,6 +236,9 @@
     </div>
 
     <script th:inline="javascript">
+        /**
+         * Chức năng xác nhận mua gói cước từ danh sách hiển thị.
+         */
         function confirmBuyFromCard(card) {
             confirmBuy(
                 card.getAttribute('data-id'),
@@ -188,10 +247,21 @@
             );
         }
 
+        /**
+         * Xử lý logic tính toán giá cuối cùng và gửi yêu cầu lên server.
+         * Tính toán bao gồm: Giá gốc - Giảm giá H-Point - Giảm giá Voucher.
+         */
         async function confirmBuy(packageId, packageName, price) {
             const hPoints = /*[[${hPoints}]]*/ 0;
             const pointsToUse = parseInt(document.getElementById('pointsToUse').value) || 0;
-            
+            const voucherSelect = document.getElementById('userVoucher');
+            const voucherId = voucherSelect.value;
+
+            // Lấy mức giảm giá từ data attribute của option đã chọn
+            const voucherDiscount = voucherId !== 'NONE' ?
+                parseInt(voucherSelect.options[voucherSelect.selectedIndex].getAttribute('data-discount')) : 0;
+
+            // Kiểm tra tính hợp lệ của điểm input
             if (pointsToUse < 0) {
                 alert('Số điểm không hợp lệ.');
                 return;
@@ -202,9 +272,11 @@
                 return;
             }
 
-            const discount = pointsToUse * 100;
-            const finalPrice = Math.max(0, price - discount);
+            // Quy đổi điểm ra tiền (1 điểm = 100đ)
+            const pointDiscount = pointsToUse * 100;
+            const finalPrice = Math.max(0, price - pointDiscount - voucherDiscount);
 
+            // Hiển thị hộp thoại xác nhận chi tiết
             let confirmMsg = `Bạn có chắc chắn muốn mua gói cước: ${packageName}?`;
             if (pointsToUse > 0) {
                 confirmMsg += `\n\n- Sử dụng ${pointsToUse} điểm H-Point.`;
@@ -217,6 +289,7 @@
             if (!confirm(confirmMsg)) return;
 
             try {
+                // Gửi thông tin lên API để tạo đơn hàng
                 const response = await fetch('/api/passes/buy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -226,8 +299,10 @@
                 if (response.ok) {
                     const data = await response.json();
                     if (data.paymentUrl) {
+                        // Trường hợp cần thanh toán qua VNPAY -> Chuyển hướng
                         window.location.href = data.paymentUrl;
                     } else if (data.redirect) {
+                        // Trường hợp thanh toán 0đ thành công -> Về trang Vé của tôi
                         alert(data.message || 'Kích hoạt thẻ thành công!');
                         window.location.href = data.redirect;
                     } else {
@@ -245,4 +320,5 @@
         }
     </script>
 </body>
+
 </html>
